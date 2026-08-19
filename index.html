@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B733 Perf">
+<meta name="theme-color" content="#0a1628">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg">
+<title>737-300 Performance</title>
+<style>
+  :root {
+    --bg: #0a1628;
+    --card: #132337;
+    --card2: #1a2d45;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #1e3a5f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    overscroll-behavior: none;
+  }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+  .header {
+    background: linear-gradient(180deg, #0f2744 0%, var(--bg) 100%);
+    padding: 14px 16px 10px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header h1 {
+    font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .header h1 span { color: var(--accent2); }
+  .header .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tabs {
+    display: flex; gap: 6px; margin-top: 12px;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 10px 4px;
+    border-radius: 10px; font-size: 13px; font-weight: 600;
+    background: var(--card); color: var(--muted);
+    border: 1px solid transparent; transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--accent); color: #fff;
+    border-color: var(--accent2);
+  }
+  .content { padding: 14px 14px 40px; max-width: 520px; margin: 0 auto; }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--accent2); margin-bottom: 12px;
+  }
+  .row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 120px; }
+  label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--muted); margin-bottom: 4px; text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  input[type="number"], select {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 17px; font-weight: 600;
+    padding: 11px 12px;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0;
+  }
+  .toggle {
+    width: 50px; height: 30px; border-radius: 15px;
+    background: var(--card2); border: 1px solid var(--border);
+    position: relative; cursor: pointer; transition: 0.2s;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent2); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; transition: 0.2s;
+  }
+  .toggle.on::after { left: 23px; }
+  .result-box {
+    background: linear-gradient(135deg, #0f2744, #1a3a5c);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid var(--accent);
+    margin-top: 8px;
+  }
+  .result-main {
+    font-size: 36px; font-weight: 800; letter-spacing: -1px;
+    color: #fff; line-height: 1.1;
+  }
+  .result-main span { font-size: 18px; font-weight: 600; color: var(--accent2); }
+  .result-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .breakdown {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  .breakdown div { display: flex; justify-content: space-between; padding: 2px 0; }
+  .breakdown .val { color: var(--text); font-weight: 600; }
+  .warn {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid var(--amber);
+    color: #fbbf24;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+  .danger {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid var(--red);
+    color: #f87171;
+  }
+  .ok {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid var(--green);
+    color: #4ade80;
+  }
+  .note {
+    font-size: 11px; color: var(--muted);
+    margin-top: 10px; line-height: 1.45;
+  }
+  .section-hidden { display: none; }
+  .seg {
+    display: flex; background: var(--card2); border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .seg button {
+    flex: 1; border: none; background: transparent; color: var(--muted);
+    padding: 10px 4px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: 0.15s;
+  }
+  .seg button.active {
+    background: var(--accent); color: #fff;
+  }
+  .unit { font-size: 13px; color: var(--muted); margin-left: 4px; }
+  /* Landing matrix + runway visual */
+  .ld-layout { display: flex; gap: 12px; flex-wrap: wrap; }
+  .ld-table-wrap { flex: 1; min-width: 260px; overflow-x: auto; }
+  .ld-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    background: var(--card2); border-radius: 10px; overflow: hidden;
+  }
+  .ld-table th, .ld-table td {
+    padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border);
+  }
+  .ld-table th {
+    background: #0f2744; color: var(--accent2); font-weight: 700;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .ld-table td { font-weight: 600; color: var(--text); }
+  .ld-table tr.selected td { background: rgba(59,130,246,0.25); color: #93c5fd; }
+  .ld-table td.ok { color: #4ade80; }
+  .ld-table td.over { color: #f87171; }
+  .ld-table td.cond { text-align: left; color: var(--muted); font-weight: 500; font-size: 11px; padding-left: 10px; }
+  .rwy-panel {
+    width: 220px; flex-shrink: 0;
+    background: #0b1220; border-radius: 12px; padding: 12px 10px;
+    border: 1px solid var(--border); display: flex; flex-direction: column; align-items: stretch;
+  }
+  .rwy-lda { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-align: center; }
+  .rwy-lda strong { color: #fbbf24; font-size: 14px; }
+  .rwy-diagram {
+    position: relative; height: 320px; margin: 4px 0 8px 0;
+    overflow: visible;
+  }
+  .rwy-bar {
+    position: absolute; left: 4px; top: 0; bottom: 0; width: 32px;
+    background: linear-gradient(180deg, #1e3a5f 0%, #0f2744 100%);
+    border-radius: 4px; border: 2px solid #334155; overflow: hidden;
+  }
+  .rwy-fill {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 100%;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 8px, rgba(255,255,255,0.04) 8px, rgba(255,255,255,0.04) 16px
+    );
+  }
+  .rwy-mark {
+    position: absolute; left: 0; right: 0; height: 0;
+    pointer-events: none; z-index: 2;
+  }
+  .rwy-mark .tick {
+    position: absolute; left: 4px; width: 32px; height: 4px;
+    background: currentColor; border-radius: 1px;
+  }
+  .rwy-mark .lbl {
+    position: absolute; left: 42px; top: -9px; white-space: nowrap;
+    font-size: 12px; font-weight: 800; color: inherit;
+    background: #0b1220; padding: 2px 6px; border-radius: 4px;
+    border: 1px solid currentColor; line-height: 1.2;
+  }
+  .rwy-mark.exit .tick {
+    height: 3px; background: #f8fafc;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.5);
+  }
+  .rwy-mark.exit .lbl { color: #f8fafc; border-color: #94a3b8; }
+  .rwy-meta { margin-top: 4px; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.45; }
+  .rwy-meta strong { color: var(--text); }
+  .rwy-legend {
+    margin-top: 8px; font-size: 11px; line-height: 1.55;
+  }
+  .rwy-legend div {
+    display: flex; justify-content: space-between; gap: 6px;
+    font-weight: 700;
+  }
+  .exit-row { margin-top: 8px; }
+  .exit-row label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .exit-row input {
+    width: 100%; background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 8px; font-size: 14px; font-weight: 600;
+  }
+  .exit-status {
+    margin-top: 6px; font-size: 11px; font-weight: 600; text-align: center; min-height: 16px;
+  }
+  .exit-status.ok { color: #4ade80; }
+  .exit-status.no { color: #f87171; }
+  .ld-toggle {
+    display: flex; gap: 0; margin-bottom: 10px; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border); width: fit-content;
+  }
+  .ld-toggle button {
+    border: none; background: var(--card2); color: var(--muted);
+    padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .ld-toggle button.active { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>✈ <span>B737-300</span> Performance</h1>
+    <div class="sub">QRH Normal Config • Landing Distance & Brake Cooling</div>
+    <div class="tabs">
+      <div class="tab active" data-tab="landing" onclick="switchTab('landing')">Landing Distance</div>
+      <div class="tab" data-tab="cooling" onclick="switchTab('cooling')">Brake Cooling</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- ========== LANDING DISTANCE ========== -->
+    <div id="tab-landing">
+      <div class="card">
+        <div class="card-title">Aircraft & Conditions</div>
+        <div class="row">
+          <div class="field">
+            <label>Landing Weight (kg)</label>
+            <input type="number" id="ld-weight" value="48000" min="35000" max="70000" step="100" inputmode="numeric" oninput="calcLanding()">
+          </div>
+          <div class="field" style="max-width:110px">
+            <label>Flaps</label>
+            <div class="seg" id="flaps-seg">
+              <button class="active" data-v="30" onclick="setFlaps(30)">30</button>
+              <button data-v="40" onclick="setFlaps(40)">40</button>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Braking Configuration</label>
+            <select id="ld-brake" onchange="calcLanding()">
+              <option value="MAX MANUAL">MAX MANUAL</option>
+              <option value="AUTOBRAKE MAX">AUTOBRAKE MAX</option>
+              <option value="AUTOBRAKE 3">AUTOBRAKE 3</option>
+              <option value="AUTOBRAKE 2" selected>AUTOBRAKE 2</option>
+              <option value="AUTOBRAKE 1">AUTOBRAKE 1</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Reported Braking Action</label>
+            <select id="ld-cond" onchange="calcLanding()">
+              <option value="dry">Dry Runway</option>
+              <option value="good">Good</option>
+              <option value="gtm">Good to Medium</option>
+              <option value="med">Medium</option>
+              <option value="mtp">Medium to Poor</option>
+              <option value="poor">Poor</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Airport & Runway</div>
+        <div class="row">
+          <div class="field">
+            <label>Airport (search name / IATA / ICAO)</label>
+            <input type="text" id="ld-airport" list="airport-list" placeholder="e.g. Alicante or ALC" oninput="onAirportInput()" autocomplete="off">
+            <datalist id="airport-list"></datalist>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Published runway</label>
+            <select id="ld-rwy" onchange="onRwyChange()">
+              <option value="">— select airport first —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Magnetic heading (°M)</label>
+            <input type="number" id="ld-rwyhdg" value="" min="0" max="360" step="1" inputmode="numeric" placeholder="e.g. 100" oninput="calcLanding()">
+          </div>
+        </div>
+        <div class="note" id="ld-rwyinfo">Select airport then runway, or type heading manually.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Weather & Adjustments</div>
+        <div class="row">
+          <div class="field">
+            <label>Pressure Altitude (ft)</label>
+            <input type="number" id="ld-alt" value="0" step="100" inputmode="numeric" oninput="calcLanding()">
+          </div>
+          <div class="field">
+            <label>OAT (°C)</label>
+            <input type="number" id="ld-oat" value="15" step="1" inputmode="numeric" oninput="calcLanding()">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Wind Speed (kts)</label>
+            <input type="number" id="ld-wspd" value="0" min="0" step="1" inputmode="numeric" oninput="calcLanding()">
+          </div>
+          <div class="field">
+            <label>Wind Direction (° from)</label>
+            <input type="number" id="ld-wdir" value="0" min="0" max="360" step="1" inputmode="numeric" oninput="calcLanding()">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Slope (%) +Down / −Up</label>
+            <input type="number" id="ld-slope" value="0" step="0.1" inputmode="decimal" oninput="calcLanding()">
+          </div>
+          <div class="field">
+            <label>App Speed above VREF (kts)</label>
+            <input type="number" id="ld-appspd" value="0" min="0" step="1" inputmode="numeric" oninput="calcLanding()">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Reverse Thrust</label>
+            <select id="ld-rev" onchange="calcLanding()">
+              <option value="2">Two Engine (Detent 2)</option>
+              <option value="1">One Reverse</option>
+              <option value="0">No Reverse</option>
+            </select>
+          </div>
+        </div>
+        <div class="toggle-row" id="manual-spdbrk-row" style="display:none">
+          <label style="margin:0">Manual Speedbrakes (MAX MANUAL)</label>
+          <div class="toggle" id="ld-manualsb" onclick="this.classList.toggle('on');calcLanding()"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Landing Distance Available</div>
+        <div class="row">
+          <div class="field">
+            <label>LDA (metres)</label>
+            <input type="number" id="ld-lda" value="2000" min="500" max="5000" step="10" inputmode="numeric" oninput="calcLanding()">
+          </div>
+        </div>
+      </div>
+
+      <div class="result-box" id="ld-result" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <div class="result-sub" style="margin:0">LANDING DISTANCES (m) — Factored</div>
+          <div class="ld-toggle">
+            <button class="active" id="btn-factored" onclick="setFactored(true)">FACTORED</button>
+            <button id="btn-unfactored" onclick="setFactored(false)">UNFACTORED</button>
+          </div>
+        </div>
+        <div class="ld-layout">
+          <div class="ld-table-wrap">
+            <table class="ld-table" id="ld-matrix">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>AB1</th>
+                  <th>AB2</th>
+                  <th>AB3</th>
+                  <th>AB MAX</th>
+                  <th>MAX MAN</th>
+                </tr>
+              </thead>
+              <tbody id="ld-matrix-body"></tbody>
+            </table>
+          </div>
+          <div class="rwy-panel">
+            <div class="rwy-lda">LDA <strong id="rwy-lda-val">—</strong></div>
+            <div class="rwy-diagram" id="rwy-diagram">
+              <div class="rwy-bar">
+                <div class="rwy-fill"></div>
+              </div>
+              <!-- markers injected by JS into #rwy-diagram -->
+            </div>
+            <div class="rwy-legend" id="rwy-legend"></div>
+            <div class="rwy-meta" id="rwy-meta">—</div>
+            <div class="exit-row">
+              <label>Exit / intersection from THR (m)</label>
+              <input type="number" id="ld-exit" value="" min="200" max="5000" step="10" inputmode="numeric" placeholder="e.g. 1600" oninput="calcLanding()">
+            </div>
+            <div class="exit-status" id="exit-status"></div>
+          </div>
+        </div>
+        <div class="breakdown" id="ld-break" style="margin-top:12px"></div>
+        <div class="note" id="ld-notes"></div>
+      </div>
+    </div>
+
+    <!-- ========== BRAKE COOLING ========== -->
+    <div id="tab-cooling" class="section-hidden">
+      <div class="card">
+        <div class="card-title">Conditions</div>
+        <div class="row">
+          <div class="field">
+            <label>Landing / RTO Weight (1000 kg)</label>
+            <input type="number" id="bc-weight" value="48" min="40" max="70" step="0.5" inputmode="decimal" oninput="calcCooling()">
+          </div>
+          <div class="field">
+            <label>OAT (°C)</label>
+            <input type="number" id="bc-oat" value="15" step="1" inputmode="numeric" oninput="calcCooling()">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Pressure Altitude (1000 ft)</label>
+            <input type="number" id="bc-alt" value="0" min="0" max="8" step="0.5" inputmode="decimal" oninput="calcCooling()">
+          </div>
+          <div class="field">
+            <label>Brakes-on Speed (KIAS)</label>
+            <input type="number" id="bc-speed" value="100" min="60" max="140" step="5" inputmode="numeric" oninput="calcCooling()">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Event</label>
+            <select id="bc-event" onchange="calcCooling()">
+              <option value="landing">Landing</option>
+              <option value="rto">RTO (Max Manual)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Reverse Thrust</label>
+            <select id="bc-rev" onchange="calcCooling()">
+              <option value="2">Two Engine Detent</option>
+              <option value="0">No Reverse</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Landing Brake Config (if Landing)</label>
+            <select id="bc-brake" onchange="calcCooling()">
+              <option value="MAX MAN">MAX MANUAL</option>
+              <option value="MAX AUTO">MAX AUTO</option>
+              <option value="AUTOBRAKE 3">AUTOBRAKE 3</option>
+              <option value="AUTOBRAKE 2" selected>AUTOBRAKE 2</option>
+              <option value="AUTOBRAKE 1">AUTOBRAKE 1</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Taxi miles after stop</label>
+            <input type="number" id="bc-taxi" value="0" min="0" max="10" step="0.5" inputmode="decimal" oninput="calcCooling()">
+          </div>
+        </div>
+      </div>
+
+      <div class="result-box" id="bc-result">
+        <div class="result-sub">Recommended Brake Cooling Time</div>
+        <div class="result-main" id="bc-time">— <span>min</span></div>
+        <div class="result-sub" id="bc-time-detail" style="margin-top:4px">—</div>
+        <div class="breakdown" id="bc-break"></div>
+        <div id="bc-status" class="warn" style="display:none"></div>
+        <div class="note" id="bc-notes"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// LANDING DISTANCE DATA (from QRH B733 – already +15 %)
+// ref = REF DIST (ft) at 48 000 kg
+// wt  = [ABV, BLW] per 5000 kg
+// alt = per 1000 ft above SL
+// wind= [HEAD, TAIL] per 10 kts
+// slope=[DOWN, UP] per 1 %
+// temp = [ABV, BLW] per 10 °C ISA
+// app  = per 10 kts above VREF
+// rev  = [ONE REV, NO REV]
+// ============================================================
+const LD = {
+  30: {
+    dry: {
+      "MAX MANUAL":   {ref:3530, wt:[350,-180], alt:60,  wind:[-100,370], slope:[30,-30],  temp:[60,-60],  app:220, rev:[50,140]},
+      "AUTOBRAKE MAX":{ref:4390, wt:[280,-260], alt:80,  wind:[-140,480], slope:[0,0],    temp:[80,-80],  app:380, rev:[0,10]},
+      "AUTOBRAKE 3":  {ref:5910, wt:[410,-440], alt:140, wind:[-240,810], slope:[20,-30], temp:[140,-140],app:560, rev:[50,60]},
+      "AUTOBRAKE 2":  {ref:6950, wt:[560,-600], alt:180, wind:[-310,1060],slope:[90,-140],temp:[170,-170],app:520, rev:[230,230]},
+      "AUTOBRAKE 1":  {ref:7430, wt:[680,-670], alt:220, wind:[-360,1230],slope:[210,-210],temp:[180,-180],app:510, rev:[740,1090]}
+    },
+    good: {
+      "MAX MANUAL":   {ref:4650, wt:[300,-300], alt:90,  wind:[-180,640], slope:[90,-80],  temp:[90,-90],  app:320, rev:[200,700]},
+      "AUTOBRAKE MAX":{ref:4900, wt:[320,-330], alt:100, wind:[-200,670], slope:[70,-70],  temp:[90,-90],  app:370, rev:[220,760]},
+      "AUTOBRAKE 3":  {ref:5920, wt:[410,-450], alt:140, wind:[-240,820], slope:[30,-30],  temp:[140,-140],app:560, rev:[60,220]},
+      "AUTOBRAKE 2":  {ref:6950, wt:[560,-600], alt:180, wind:[-310,1060],slope:[90,-140],temp:[170,-170],app:520, rev:[230,230]},
+      "AUTOBRAKE 1":  {ref:7430, wt:[680,-670], alt:220, wind:[-360,1230],slope:[210,-210],temp:[180,-180],app:510, rev:[740,1090]}
+    },
+    gtm: {
+      "MAX MANUAL":   {ref:5300, wt:[380,-380], alt:120, wind:[-240,850], slope:[160,-130],temp:[110,-110],app:360, rev:[360,1470]},
+      "AUTOBRAKE MAX":{ref:5430, wt:[400,-400], alt:130, wind:[-240,860], slope:[130,-110],temp:[110,-110],app:410, rev:[370,1490]},
+      "AUTOBRAKE 3":  {ref:6140, wt:[450,-470], alt:140, wind:[-270,950], slope:[90,-70],  temp:[140,-140],app:560, rev:[220,1180]},
+      "AUTOBRAKE 2":  {ref:7020, wt:[580,-600], alt:180, wind:[-320,1130],slope:[130,-170],temp:[170,-170],app:520, rev:[280,850]},
+      "AUTOBRAKE 1":  {ref:7450, wt:[680,-670], alt:220, wind:[-360,1250],slope:[240,-220],temp:[180,-180],app:510, rev:[750,1430]}
+    },
+    med: {
+      "MAX MANUAL":   {ref:5950, wt:[460,-460], alt:150, wind:[-290,1050],slope:[220,-170],temp:[130,-130],app:400, rev:[530,2230]},
+      "AUTOBRAKE MAX":{ref:5970, wt:[470,-470], alt:150, wind:[-290,1050],slope:[180,-150],temp:[130,-130],app:460, rev:[520,2220]},
+      "AUTOBRAKE 3":  {ref:6360, wt:[490,-490], alt:150, wind:[-300,1090],slope:[150,-120],temp:[150,-150],app:560, rev:[390,2150]},
+      "AUTOBRAKE 2":  {ref:7100, wt:[590,-610], alt:180, wind:[-330,1200],slope:[170,-200],temp:[170,-170],app:520, rev:[320,1460]},
+      "AUTOBRAKE 1":  {ref:7460, wt:[680,-670], alt:220, wind:[-360,1280],slope:[260,-230],temp:[180,-180],app:510, rev:[770,1770]}
+    },
+    mtp: {
+      "MAX MANUAL":   {ref:6640, wt:[550,-540], alt:180, wind:[-350,1320],slope:[350,-250],temp:[150,-150],app:430, rev:[790,4260]},
+      "AUTOBRAKE MAX":{ref:6650, wt:[560,-550], alt:180, wind:[-350,1320],slope:[330,-240],temp:[150,-150],app:470, rev:[780,4270]},
+      "AUTOBRAKE 3":  {ref:6870, wt:[580,-560], alt:180, wind:[-360,1350],slope:[300,-210],temp:[160,-160],app:550, rev:[740,4240]},
+      "AUTOBRAKE 2":  {ref:7420, wt:[630,-640], alt:200, wind:[-380,1430],slope:[300,-260],temp:[180,-180],app:510, rev:[580,3710]},
+      "AUTOBRAKE 1":  {ref:7710, wt:[710,-700], alt:220, wind:[-400,1480],slope:[380,-290],temp:[190,-190],app:510, rev:[920,3820]}
+    },
+    poor: {
+      "MAX MANUAL":   {ref:7330, wt:[640,-620], alt:210, wind:[-410,1600],slope:[480,-330],temp:[170,-170],app:460, rev:[1050,6290]},
+      "AUTOBRAKE MAX":{ref:7330, wt:[640,-620], alt:210, wind:[-410,1590],slope:[480,-320],temp:[170,-170],app:480, rev:[1050,6330]},
+      "AUTOBRAKE 3":  {ref:7370, wt:[670,-630], alt:210, wind:[-410,1600],slope:[460,-300],temp:[170,-170],app:540, rev:[1080,6330]},
+      "AUTOBRAKE 2":  {ref:7750, wt:[680,-680], alt:210, wind:[-430,1660],slope:[440,-320],temp:[180,-180],app:510, rev:[830,5960]},
+      "AUTOBRAKE 1":  {ref:7960, wt:[740,-720], alt:230, wind:[-450,1690],slope:[490,-360],temp:[200,-200],app:510, rev:[1070,5880]}
+    }
+  },
+  40: {
+    dry: {
+      "MAX MANUAL":   {ref:3470, wt:[330,-180], alt:60,  wind:[-100,370], slope:[30,-30],  temp:[60,-60],  app:230, rev:[30,140]},
+      "AUTOBRAKE MAX":{ref:4260, wt:[300,-250], alt:80,  wind:[-140,470], slope:[0,0],    temp:[80,-80],  app:370, rev:[0,10]},
+      "AUTOBRAKE 3":  {ref:5670, wt:[460,-430], alt:130, wind:[-230,780], slope:[20,-50], temp:[130,-130],app:520, rev:[50,70]},
+      "AUTOBRAKE 2":  {ref:6610, wt:[600,-550], alt:170, wind:[-300,1020],slope:[100,-130],temp:[160,-160],app:480, rev:[230,230]},
+      "AUTOBRAKE 1":  {ref:7070, wt:[690,-620], alt:200, wind:[-350,1200],slope:[200,-200],temp:[170,-170],app:480, rev:[640,1020]}
+    },
+    good: {
+      "MAX MANUAL":   {ref:4530, wt:[330,-290], alt:90,  wind:[-180,630], slope:[90,-80],  temp:[90,-90],  app:320, rev:[170,640]},
+      "AUTOBRAKE MAX":{ref:4770, wt:[360,-320], alt:100, wind:[-180,660], slope:[70,-60],  temp:[90,-90],  app:370, rev:[200,710]},
+      "AUTOBRAKE 3":  {ref:5680, wt:[460,-430], alt:130, wind:[-230,790], slope:[30,-50],  temp:[130,-130],app:520, rev:[50,230]},
+      "AUTOBRAKE 2":  {ref:6610, wt:[600,-550], alt:170, wind:[-300,1020],slope:[100,-130],temp:[160,-160],app:480, rev:[230,230]},
+      "AUTOBRAKE 1":  {ref:7070, wt:[690,-620], alt:200, wind:[-350,1200],slope:[200,-200],temp:[170,-170],app:480, rev:[640,1020]}
+    },
+    gtm: {
+      "MAX MANUAL":   {ref:5140, wt:[410,-360], alt:120, wind:[-230,830], slope:[150,-130],temp:[110,-110],app:360, rev:[320,1340]},
+      "AUTOBRAKE MAX":{ref:5270, wt:[430,-390], alt:120, wind:[-230,840], slope:[130,-100],temp:[110,-110],app:410, rev:[330,1360]},
+      "AUTOBRAKE 3":  {ref:5900, wt:[490,-450], alt:140, wind:[-260,930], slope:[90,-90],  temp:[130,-130],app:520, rev:[210,1110]},
+      "AUTOBRAKE 2":  {ref:6690, wt:[600,-560], alt:170, wind:[-310,1090],slope:[140,-160],temp:[160,-160],app:480, rev:[270,790]},
+      "AUTOBRAKE 1":  {ref:7090, wt:[690,-630], alt:200, wind:[-350,1220],slope:[220,-200],temp:[170,-170],app:480, rev:[660,1340]}
+    },
+    med: {
+      "MAX MANUAL":   {ref:5750, wt:[490,-440], alt:140, wind:[-280,1020],slope:[210,-170],temp:[130,-130],app:390, rev:[470,2040]},
+      "AUTOBRAKE MAX":{ref:5770, wt:[510,-450], alt:140, wind:[-280,1020],slope:[180,-140],temp:[130,-130],app:460, rev:[470,2010]},
+      "AUTOBRAKE 3":  {ref:6120, wt:[530,-470], alt:150, wind:[-290,1070],slope:[150,-130],temp:[140,-140],app:520, rev:[370,1990]},
+      "AUTOBRAKE 2":  {ref:6760, wt:[610,-580], alt:170, wind:[-320,1160],slope:[180,-180],temp:[160,-160],app:480, rev:[310,1360]},
+      "AUTOBRAKE 1":  {ref:7110, wt:[690,-630], alt:200, wind:[-350,1240],slope:[240,-210],temp:[170,-170],app:480, rev:[670,1660]}
+    },
+    mtp: {
+      "MAX MANUAL":   {ref:6390, wt:[580,-510], alt:170, wind:[-340,1290],slope:[330,-240],temp:[140,-140],app:420, rev:[700,3830]},
+      "AUTOBRAKE MAX":{ref:6410, wt:[590,-520], alt:170, wind:[-340,1290],slope:[320,-220],temp:[140,-140],app:470, rev:[700,3830]},
+      "AUTOBRAKE 3":  {ref:6600, wt:[600,-530], alt:170, wind:[-350,1320],slope:[300,-210],temp:[150,-150],app:500, rev:[670,3840]},
+      "AUTOBRAKE 2":  {ref:7080, wt:[660,-610], alt:180, wind:[-370,1390],slope:[310,-250],temp:[170,-170],app:480, rev:[540,3340]},
+      "AUTOBRAKE 1":  {ref:7350, wt:[720,-660], alt:210, wind:[-390,1440],slope:[360,-280],temp:[180,-180],app:480, rev:[810,3480]}
+    },
+    poor: {
+      "MAX MANUAL":   {ref:7040, wt:[670,-590], alt:200, wind:[-400,1560],slope:[460,-310],temp:[160,-160],app:450, rev:[930,5620]},
+      "AUTOBRAKE MAX":{ref:7040, wt:[670,-590], alt:200, wind:[-400,1560],slope:[460,-300],temp:[160,-160],app:470, rev:[920,5650]},
+      "AUTOBRAKE 3":  {ref:7080, wt:[680,-600], alt:200, wind:[-400,1580],slope:[450,-300],temp:[160,-160],app:480, rev:[970,5690]},
+      "AUTOBRAKE 2":  {ref:7390, wt:[700,-640], alt:200, wind:[-410,1610],slope:[440,-310],temp:[170,-170],app:480, rev:[770,5320]},
+      "AUTOBRAKE 1":  {ref:7590, wt:[750,-680], alt:220, wind:[-430,1640],slope:[470,-350],temp:[180,-180],app:480, rev:[940,5300]}
+    }
+  }
+};
+
+// Manual speedbrake add-on (ft)
+const MANUAL_SB = {30: 320, 40: 290};
+
+let currentFlaps = 30;
+
+// ============================================================
+// AIRPORTS — Jet2 destinations + UK bases (magnetic headings)
+// ============================================================
+const AIRPORTS = [
+  { iata:"ALC", icao:"LEAL", name:"Alicante", elev:142, rwys:[{id:"10",hdg:100,lda:3000},{id:"28",hdg:280,lda:3000}] },
+  { iata:"AGP", icao:"LEMG", name:"Malaga", elev:52, rwys:[{id:"12",hdg:117,lda:2750},{id:"13",hdg:131,lda:3200},{id:"30",hdg:297,lda:2750},{id:"31",hdg:311,lda:3200}] },
+  { iata:"PMI", icao:"LEPA", name:"Palma de Mallorca", elev:27, rwys:[{id:"06L",hdg:59,lda:3270},{id:"06R",hdg:59,lda:2590},{id:"24L",hdg:239,lda:3000},{id:"24R",hdg:239,lda:3200}] },
+  { iata:"TFS", icao:"GCTS", name:"Tenerife South", elev:209, rwys:[{id:"07",hdg:74,lda:3200},{id:"25",hdg:254,lda:3200}] },
+  { iata:"ACE", icao:"GCRR", name:"Lanzarote", elev:47, rwys:[{id:"03",hdg:32,lda:2400},{id:"21",hdg:212,lda:2400}] },
+  { iata:"LPA", icao:"GCLP", name:"Gran Canaria", elev:78, rwys:[{id:"03L",hdg:27,lda:3100},{id:"03R",hdg:27,lda:3100},{id:"21L",hdg:207,lda:3100},{id:"21R",hdg:207,lda:3100}] },
+  { iata:"FUE", icao:"GCFV", name:"Fuerteventura", elev:85, rwys:[{id:"01",hdg:7,lda:2400},{id:"19",hdg:187,lda:2400}] },
+  { iata:"IBZ", icao:"LEIB", name:"Ibiza", elev:24, rwys:[{id:"06",hdg:62,lda:2800},{id:"24",hdg:242,lda:2800}] },
+  { iata:"MAH", icao:"LEMH", name:"Menorca", elev:287, rwys:[{id:"01",hdg:8,lda:2100},{id:"19",hdg:188,lda:2350}] },
+  { iata:"GRO", icao:"LEGE", name:"Girona", elev:468, rwys:[{id:"01",hdg:14,lda:2400},{id:"19",hdg:194,lda:2400}] },
+  { iata:"REU", icao:"LERS", name:"Reus", elev:233, rwys:[{id:"07",hdg:69,lda:2455},{id:"25",hdg:249,lda:2455}] },
+  { iata:"LEI", icao:"LEAM", name:"Almeria", elev:70, rwys:[{id:"07",hdg:73,lda:3200},{id:"25",hdg:253,lda:3200}] },
+  { iata:"FAO", icao:"LPFR", name:"Faro", elev:24, rwys:[{id:"10",hdg:101,lda:2490},{id:"28",hdg:281,lda:2490}] },
+  { iata:"FNC", icao:"LPMA", name:"Madeira", elev:192, rwys:[{id:"05",hdg:47,lda:2481},{id:"23",hdg:227,lda:1800}] },
+  { iata:"AYT", icao:"LTAI", name:"Antalya", elev:177, rwys:[{id:"18C",hdg:181,lda:3400},{id:"36C",hdg:1,lda:3400},{id:"18L",hdg:181,lda:2990},{id:"36R",hdg:1,lda:2990}] },
+  { iata:"BJV", icao:"LTFE", name:"Bodrum", elev:21, rwys:[{id:"10",hdg:99,lda:3000},{id:"28",hdg:279,lda:3000}] },
+  { iata:"DLM", icao:"LTBS", name:"Dalaman", elev:20, rwys:[{id:"01",hdg:10,lda:3000},{id:"19",hdg:190,lda:3000}] },
+  { iata:"ADB", icao:"LTBJ", name:"Izmir", elev:412, rwys:[{id:"16L",hdg:162,lda:3240},{id:"34R",hdg:342,lda:3240},{id:"16R",hdg:162,lda:3224},{id:"34L",hdg:342,lda:3224}] },
+  { iata:"HER", icao:"LGIR", name:"Heraklion", elev:115, rwys:[{id:"09",hdg:90,lda:2680},{id:"27",hdg:270,lda:2680}] },
+  { iata:"CHQ", icao:"LGSA", name:"Chania", elev:490, rwys:[{id:"11",hdg:106,lda:3347},{id:"29",hdg:286,lda:3347}] },
+  { iata:"CFU", icao:"LGKR", name:"Corfu", elev:6, rwys:[{id:"16",hdg:164,lda:2373},{id:"34",hdg:344,lda:2373}] },
+  { iata:"RHO", icao:"LGRP", name:"Rhodes", elev:17, rwys:[{id:"06",hdg:65,lda:3305},{id:"24",hdg:245,lda:3305}] },
+  { iata:"KGS", icao:"LGKO", name:"Kos", elev:412, rwys:[{id:"14",hdg:143,lda:2390},{id:"32",hdg:323,lda:2390}] },
+  { iata:"ZTH", icao:"LGZA", name:"Zante", elev:15, rwys:[{id:"16",hdg:158,lda:2228},{id:"34",hdg:338,lda:2228}] },
+  { iata:"EFL", icao:"LGKF", name:"Kefalonia", elev:60, rwys:[{id:"14",hdg:141,lda:2438},{id:"32",hdg:321,lda:2438}] },
+  { iata:"JSI", icao:"LGSK", name:"Skiathos", elev:54, rwys:[{id:"01",hdg:14,lda:1628},{id:"19",hdg:194,lda:1628}] },
+  { iata:"KLX", icao:"LGKL", name:"Kalamata", elev:26, rwys:[{id:"17R",hdg:164,lda:2703},{id:"35L",hdg:344,lda:2703}] },
+  { iata:"PVK", icao:"LGPZ", name:"Preveza", elev:11, rwys:[{id:"07",hdg:63,lda:2871},{id:"25",hdg:243,lda:2871}] },
+  { iata:"SKG", icao:"LGTS", name:"Thessaloniki", elev:22, rwys:[{id:"10",hdg:99,lda:2410},{id:"28",hdg:279,lda:2410}] },
+  { iata:"BOJ", icao:"LBBG", name:"Burgas", elev:135, rwys:[{id:"04",hdg:39,lda:3200},{id:"22",hdg:219,lda:3200}] },
+  { iata:"MLA", icao:"LMML", name:"Malta", elev:300, rwys:[{id:"13",hdg:129,lda:3544},{id:"31",hdg:309,lda:3377},{id:"05",hdg:49,lda:2377},{id:"23",hdg:229,lda:2377}] },
+  { iata:"PFO", icao:"LCPH", name:"Paphos", elev:41, rwys:[{id:"11",hdg:106,lda:2700},{id:"29",hdg:286,lda:2700}] },
+  { iata:"LCA", icao:"LCLK", name:"Larnaca", elev:8, rwys:[{id:"04",hdg:41,lda:2994},{id:"22",hdg:221,lda:2994}] },
+  { iata:"NAP", icao:"LIRN", name:"Naples", elev:294, rwys:[{id:"06",hdg:55,lda:2628},{id:"24",hdg:235,lda:2628}] },
+  { iata:"VRN", icao:"LIPX", name:"Verona", elev:235, rwys:[{id:"04",hdg:43,lda:3068},{id:"22",hdg:223,lda:3068}] },
+  { iata:"VCE", icao:"LIPZ", name:"Venice", elev:7, rwys:[{id:"04R",hdg:39,lda:3300},{id:"22L",hdg:219,lda:2800}] },
+  { iata:"PMO", icao:"LICJ", name:"Palermo", elev:65, rwys:[{id:"07",hdg:64,lda:3326},{id:"25",hdg:244,lda:3326}] },
+  { iata:"DBV", icao:"LDDU", name:"Dubrovnik", elev:527, rwys:[{id:"11",hdg:115,lda:3300},{id:"29",hdg:295,lda:3100}] },
+  { iata:"SPU", icao:"LDSP", name:"Split", elev:79, rwys:[{id:"05",hdg:50,lda:2550},{id:"23",hdg:230,lda:2550}] },
+  { iata:"PUY", icao:"LDPL", name:"Pula", elev:274, rwys:[{id:"09",hdg:85,lda:2946},{id:"27",hdg:265,lda:2946}] },
+  { iata:"TIV", icao:"LYTV", name:"Tivat", elev:20, rwys:[{id:"14",hdg:136,lda:2500},{id:"32",hdg:316,lda:2500}] },
+  { iata:"AGA", icao:"GMAD", name:"Agadir", elev:226, rwys:[{id:"09",hdg:93,lda:3200},{id:"27",hdg:273,lda:3200}] },
+  { iata:"RAK", icao:"GMMX", name:"Marrakech", elev:1545, rwys:[{id:"10",hdg:98,lda:3100},{id:"28",hdg:278,lda:3100}] },
+  { iata:"HRG", icao:"HEGN", name:"Hurghada", elev:52, rwys:[{id:"16",hdg:161,lda:4000},{id:"34",hdg:341,lda:4000}] },
+  { iata:"SSH", icao:"HESH", name:"Sharm El Sheikh", elev:143, rwys:[{id:"04L",hdg:39,lda:3081},{id:"22R",hdg:219,lda:3081},{id:"04R",hdg:39,lda:3081},{id:"22L",hdg:219,lda:3081}] },
+  { iata:"NBE", icao:"DTNH", name:"Enfidha", elev:21, rwys:[{id:"09",hdg:87,lda:3300},{id:"27",hdg:267,lda:3300}] },
+  { iata:"GVA", icao:"LSGG", name:"Geneva", elev:1411, rwys:[{id:"04",hdg:43,lda:3900},{id:"22",hdg:223,lda:3900}] },
+  { iata:"INN", icao:"LOWI", name:"Innsbruck", elev:1906, rwys:[{id:"08",hdg:78,lda:2000},{id:"26",hdg:258,lda:2000}] },
+  { iata:"SZG", icao:"LOWS", name:"Salzburg", elev:1411, rwys:[{id:"15",hdg:154,lda:2750},{id:"33",hdg:334,lda:2750}] },
+  { iata:"VIE", icao:"LOWW", name:"Vienna", elev:600, rwys:[{id:"11",hdg:113,lda:3500},{id:"29",hdg:293,lda:3500},{id:"16",hdg:161,lda:3600},{id:"34",hdg:341,lda:3600}] },
+  { iata:"LBA", icao:"EGNM", name:"Leeds Bradford", elev:681, rwys:[{id:"14",hdg:138,lda:1801},{id:"32",hdg:317,lda:1916}] },
+  { iata:"MAN", icao:"EGCC", name:"Manchester", elev:257, rwys:[{id:"05L",hdg:51,lda:2587},{id:"23R",hdg:231,lda:2714},{id:"05R",hdg:51,lda:2864},{id:"23L",hdg:231,lda:2864}] },
+  { iata:"BHX", icao:"EGBB", name:"Birmingham", elev:327, rwys:[{id:"15",hdg:148,lda:2605},{id:"33",hdg:328,lda:3052}] },
+  { iata:"NCL", icao:"EGNT", name:"Newcastle", elev:266, rwys:[{id:"07",hdg:65,lda:2329},{id:"25",hdg:245,lda:2329}] },
+  { iata:"STN", icao:"EGSS", name:"London Stansted", elev:348, rwys:[{id:"04",hdg:44,lda:3048},{id:"22",hdg:224,lda:3048}] },
+  { iata:"BRS", icao:"EGGD", name:"Bristol", elev:622, rwys:[{id:"09",hdg:87,lda:2011},{id:"27",hdg:267,lda:2011}] },
+  { iata:"EDI", icao:"EGPH", name:"Edinburgh", elev:135, rwys:[{id:"06",hdg:59,lda:2556},{id:"24",hdg:239,lda:2556}] },
+  { iata:"EMA", icao:"EGNX", name:"East Midlands", elev:306, rwys:[{id:"09",hdg:88,lda:2893},{id:"27",hdg:268,lda:2893}] },
+  { iata:"GLA", icao:"EGPF", name:"Glasgow", elev:26, rwys:[{id:"05",hdg:46,lda:2665},{id:"23",hdg:226,lda:2665}] },
+  { iata:"BFS", icao:"EGAA", name:"Belfast International", elev:268, rwys:[{id:"07",hdg:65,lda:2780},{id:"25",hdg:245,lda:2780},{id:"17",hdg:162,lda:1890},{id:"35",hdg:342,lda:1890}] },
+  { iata:"LPL", icao:"EGGP", name:"Liverpool", elev:80, rwys:[{id:"09",hdg:86,lda:2286},{id:"27",hdg:266,lda:2286}] },
+  { iata:"BOH", icao:"EGHH", name:"Bournemouth", elev:38, rwys:[{id:"08",hdg:75,lda:2271},{id:"26",hdg:255,lda:2271}] },
+  { iata:"LGW", icao:"EGKK", name:"London Gatwick", elev:202, rwys:[{id:"08L",hdg:78,lda:2565},{id:"26R",hdg:258,lda:2565},{id:"08R",hdg:78,lda:3316},{id:"26L",hdg:258,lda:3159}] },
+  { iata:"LTN", icao:"EGGW", name:"London Luton", elev:526, rwys:[{id:"07",hdg:74,lda:2162},{id:"25",hdg:254,lda:2162}] },
+  { iata:"JER", icao:"EGJJ", name:"Jersey", elev:277, rwys:[{id:"08",hdg:83,lda:1706},{id:"26",hdg:263,lda:1706}] }
+];
+
+function populateAirportList() {
+  const dl = document.getElementById('airport-list');
+  dl.innerHTML = AIRPORTS.map(a =>
+    `<option value="${a.name} (${a.iata})">${a.icao}</option>`
+  ).join('');
+}
+
+function findAirport(q) {
+  if (!q) return null;
+  q = q.trim().toUpperCase();
+  return AIRPORTS.find(a =>
+    a.iata === q || a.icao === q ||
+    a.name.toUpperCase().includes(q) ||
+    `${a.name} (${a.iata})`.toUpperCase() === q ||
+    q.includes(a.iata)
+  ) || null;
+}
+
+function selectedRwy() {
+  const opt = document.getElementById('ld-rwy').selectedOptions[0];
+  if (!opt || !opt.value) return null;
+  return {
+    id: opt.value,
+    hdg: opt.dataset.hdg !== undefined && opt.dataset.hdg !== '' ? +opt.dataset.hdg : null,
+    lda: opt.dataset.lda ? +opt.dataset.lda : null
+  };
+}
+
+function applyRwyLda() {
+  const r = selectedRwy();
+  if (r && r.lda) document.getElementById('ld-lda').value = r.lda;
+  if (r && r.hdg != null) document.getElementById('ld-rwyhdg').value = r.hdg;
+}
+
+function onRwyChange() {
+  applyRwyLda();
+  calcLanding();
+}
+
+function onAirportInput() {
+  const a = findAirport(document.getElementById('ld-airport').value);
+  const sel = document.getElementById('ld-rwy');
+  const info = document.getElementById('ld-rwyinfo');
+  if (!a) {
+    sel.innerHTML = '<option value="">— select airport first —</option>';
+    info.textContent = 'Select the published runway (e.g. 32). Wind uses its magnetic heading.';
+    calcLanding();
+    return;
+  }
+  sel.innerHTML = a.rwys.map(r =>
+    `<option value="${r.id}" data-hdg="${r.hdg}" data-lda="${r.lda}">RWY ${r.id}</option>`
+  ).join('');
+  info.textContent = `${a.name} (${a.iata}/${a.icao}) — pick published runway. Magnetic heading is applied automatically.`;
+  document.getElementById('ld-alt').value = a.elev;
+  applyRwyLda();
+  calcLanding();
+}
+
+function setFlaps(f) {
+  currentFlaps = f;
+  document.querySelectorAll('#flaps-seg button').forEach(b => {
+    b.classList.toggle('active', +b.dataset.v === f);
+  });
+  const isMax = document.getElementById('ld-brake').value === 'MAX MANUAL';
+  document.getElementById('manual-spdbrk-row').style.display = isMax ? 'flex' : 'none';
+  calcLanding();
+}
+
+document.getElementById('ld-brake').addEventListener('change', () => {
+  const isMax = document.getElementById('ld-brake').value === 'MAX MANUAL';
+  document.getElementById('manual-spdbrk-row').style.display = isMax ? 'flex' : 'none';
+});
+
+let factoredMode = true;
+
+function setFactored(f) {
+  factoredMode = f;
+  document.getElementById('btn-factored').classList.toggle('active', f);
+  document.getElementById('btn-unfactored').classList.toggle('active', !f);
+  calcLanding();
+}
+
+const BRAKE_KEYS = ["AUTOBRAKE 1","AUTOBRAKE 2","AUTOBRAKE 3","AUTOBRAKE MAX","MAX MANUAL"];
+const BRAKE_SHORT = ["AB1","AB2","AB3","AB MAX","MAX MAN"];
+const COND_KEYS = ["dry","good","gtm","med","mtp","poor"];
+const COND_LABELS = ["6-DRY","5-GOOD","4-GD/MD","3-MED","2-MD/PR","1-POOR"];
+
+function distFor(flaps, cond, brake, w, alt, headwind, slope, tempDev, appspd, rev, manualSB) {
+  const t = LD[flaps][cond][brake];
+  if (!t) return null;
+  let wtAdj = 0;
+  if (w >= 48000) wtAdj = ((w - 48000) / 5000) * t.wt[0];
+  else wtAdj = ((48000 - w) / 5000) * t.wt[1];
+  const altAdj = (alt / 1000) * t.alt;
+  let windAdj = 0;
+  if (headwind >= 0) windAdj = (headwind / 10) * t.wind[0];
+  else windAdj = (Math.abs(headwind) / 10) * t.wind[1];
+  let slopeAdj = 0;
+  if (slope >= 0) slopeAdj = slope * t.slope[0];
+  else slopeAdj = Math.abs(slope) * t.slope[1];
+  let tempAdj = 0;
+  if (tempDev >= 0) tempAdj = (tempDev / 10) * t.temp[0];
+  else tempAdj = (Math.abs(tempDev) / 10) * t.temp[1];
+  const appAdj = (appspd / 10) * t.app;
+  let revAdj = 0;
+  if (rev === 1) revAdj = t.rev[0];
+  else if (rev === 0) revAdj = t.rev[1];
+  let sbAdj = 0;
+  if (brake === "MAX MANUAL" && manualSB) sbAdj = MANUAL_SB[flaps];
+  let ft = t.ref + wtAdj + altAdj + windAdj + slopeAdj + tempAdj + appAdj + revAdj + sbAdj;
+  // Tables already include +15%. Unfactored ≈ divide by 1.15
+  if (!factoredMode) ft = ft / 1.15;
+  return ft * 0.3048; // metres
+}
+
+function calcLanding() {
+  const w = +document.getElementById('ld-weight').value || 48000;
+  const selBrake = document.getElementById('ld-brake').value;
+  const selCond = document.getElementById('ld-cond').value;
+  const alt = +document.getElementById('ld-alt').value || 0;
+  const oat = +document.getElementById('ld-oat').value;
+  const wspd = +document.getElementById('ld-wspd').value || 0;
+  const wdir = +document.getElementById('ld-wdir').value || 0;
+  const slope = +document.getElementById('ld-slope').value || 0;
+  const appspd = Math.max(0, +document.getElementById('ld-appspd').value || 0);
+  const rev = +document.getElementById('ld-rev').value;
+  const manualSB = document.getElementById('ld-manualsb').classList.contains('on');
+  const lda = +document.getElementById('ld-lda').value || 2000;
+
+  const rwy = selectedRwy();
+  let rwyHdg = rwy && rwy.hdg != null ? rwy.hdg : NaN;
+  if (isNaN(rwyHdg) && document.getElementById('ld-rwyhdg').value !== '') {
+    rwyHdg = +document.getElementById('ld-rwyhdg').value;
+  }
+
+  let headwind = 0;
+  if (wspd > 0 && rwyHdg !== '' && !isNaN(rwyHdg)) {
+    let delta = ((wdir - rwyHdg + 540) % 360) - 180;
+    headwind = wspd * Math.cos(delta * Math.PI / 180);
+  }
+
+  const isa = 15 - 0.0019812 * alt;
+  const tempDev = (isNaN(oat) ? 0 : oat) - isa;
+
+  // Build matrix
+  const body = document.getElementById('ld-matrix-body');
+  let html = '';
+  const selectedDists = {}; // metres for selected condition, all brakes
+
+  COND_KEYS.forEach((ck, ci) => {
+    const isSel = ck === selCond;
+    html += `<tr class="${isSel ? 'selected' : ''}">`;
+    html += `<td class="cond">${COND_LABELS[ci]}</td>`;
+    BRAKE_KEYS.forEach((bk, bi) => {
+      const m = distFor(currentFlaps, ck, bk, w, alt, headwind, slope, tempDev, appspd, rev, manualSB);
+      if (m == null) { html += '<td>—</td>'; return; }
+      const rounded = Math.round(m);
+      const cls = rounded <= lda ? 'ok' : 'over';
+      html += `<td class="${cls}">${rounded}</td>`;
+      if (isSel) selectedDists[bk] = rounded;
+    });
+    html += '</tr>';
+  });
+  body.innerHTML = html;
+
+  // Runway visual — labelled stop points
+  document.getElementById('rwy-lda-val').textContent = Math.round(lda) + ' m';
+  const diagram = document.getElementById('rwy-diagram');
+  diagram.querySelectorAll('.rwy-mark').forEach(el => el.remove());
+
+  const colors = {
+    "MAX MANUAL": "#22c55e",
+    "AUTOBRAKE MAX": "#60a5fa",
+    "AUTOBRAKE 3": "#a78bfa",
+    "AUTOBRAKE 2": "#fbbf24",
+    "AUTOBRAKE 1": "#f87171"
+  };
+  // Shortest stop at bottom of diagram (near threshold)
+  const order = ["MAX MANUAL","AUTOBRAKE MAX","AUTOBRAKE 3","AUTOBRAKE 2","AUTOBRAKE 1"];
+  let legendHtml = '';
+  order.forEach(bk => {
+    const m = selectedDists[bk];
+    if (m == null) return;
+    const pct = Math.min(100, Math.max(0, (m / lda) * 100));
+    const fromTop = 100 - pct;
+    const short = BRAKE_SHORT[BRAKE_KEYS.indexOf(bk)];
+    const col = colors[bk] || '#fff';
+    const mark = document.createElement('div');
+    mark.className = 'rwy-mark';
+    mark.style.top = fromTop + '%';
+    mark.style.color = col;
+    mark.innerHTML = `<div class="tick"></div><div class="lbl">${short} ${m} m</div>`;
+    diagram.appendChild(mark);
+    legendHtml += `<div style="color:${col}"><span>${short}</span><span>${m} m</span></div>`;
+  });
+  document.getElementById('rwy-legend').innerHTML = legendHtml;
+
+  // Exit / intersection line
+  const exitM = +document.getElementById('ld-exit').value;
+  const exitStatus = document.getElementById('exit-status');
+  if (exitM > 0 && lda > 0) {
+    const pct = Math.min(100, Math.max(0, (exitM / lda) * 100));
+    const fromTop = 100 - pct;
+    const mark = document.createElement('div');
+    mark.className = 'rwy-mark exit';
+    mark.style.top = fromTop + '%';
+    mark.innerHTML = `<div class="tick"></div><div class="lbl">EXIT ${Math.round(exitM)} m</div>`;
+    diagram.appendChild(mark);
+
+    const makers = order.filter(bk => selectedDists[bk] != null && selectedDists[bk] <= exitM)
+      .map(bk => BRAKE_SHORT[BRAKE_KEYS.indexOf(bk)]);
+    if (makers.length) {
+      exitStatus.className = 'exit-status ok';
+      exitStatus.textContent = 'Makes exit: ' + makers.join(', ');
+    } else {
+      exitStatus.className = 'exit-status no';
+      exitStatus.textContent = 'No setting stops before this exit';
+    }
+  } else {
+    exitStatus.className = 'exit-status';
+    exitStatus.textContent = '';
+  }
+
+  // Meta
+  let rwyId = (rwy && rwy.id) ? rwy.id : (rwyHdg || '—');
+  const hwStr = headwind >= 0
+    ? `${Math.abs(headwind).toFixed(0)} kt HW`
+    : `${Math.abs(headwind).toFixed(0)} kt TW`;
+  document.getElementById('rwy-meta').innerHTML = `
+    <strong>${rwyId}</strong><br>
+    HDG ${rwyHdg || '—'}°M<br>
+    AD ELEV ${alt} ft<br>
+    SLOPE ${slope}% · ${hwStr}
+  `;
+
+  // Breakdown for selected
+  const t = LD[currentFlaps][selCond][selBrake];
+  if (t) {
+    const m = selectedDists[selBrake];
+    document.getElementById('ld-break').innerHTML = `
+      <div><span>Selected: ${selBrake} / ${COND_LABELS[COND_KEYS.indexOf(selCond)]}</span><span class="val">${m} m</span></div>
+      <div><span>Weight ${w} kg · OAT ${isNaN(oat)?'—':oat}°C · ISA ${isa.toFixed(1)}° (Δ${tempDev>=0?'+':''}${tempDev.toFixed(1)})</span></div>
+      <div><span>Flaps ${currentFlaps} · ${factoredMode ? 'Factored (+15%)' : 'Unfactored'}</span></div>
+    `;
+  }
+
+  document.getElementById('ld-notes').innerHTML = `
+    Green cells = within LDA. Diagram: labelled stop points for selected condition.<br>
+    Enter exit distance from threshold to see which autobrake makes that intersection.<br>
+    QRH B737-300 (+15%). Unfactored ≈ ÷1.15. Advisory data only.
+  `;
+}
+
+// ============================================================
+// BRAKE COOLING DATA
+// ============================================================
+// Reference energy tables: weight (t) → OAT → speed bucket → [alt0, alt4, alt8]
+// Speeds: 60, 80, 100, 120, 140
+const ENERGY_TABLE = {
+  70: {
+    [-20]: {60:[6.6,7.4,8.3], 80:[11.1,12.5,14.1], 100:[16.5,18.7,21.4], 120:[22.9,26.0,29.7], 140:[30.0,34.1,38.9]},
+    [0]:   {60:[7.1,7.9,8.8], 80:[11.9,13.4,15.1], 100:[17.7,20.1,22.9], 120:[24.5,27.9,31.9], 140:[32.2,36.6,41.7]},
+    [15]:  {60:[7.4,8.3,9.3], 80:[12.5,14.1,15.9], 100:[18.7,21.2,24.2], 120:[25.9,29.4,33.6], 140:[33.9,38.5,43.9]},
+    [20]:  {60:[7.5,8.4,9.4], 80:[12.7,14.3,16.2], 100:[19.0,21.5,24.6], 120:[26.3,29.9,34.1], 140:[34.5,39.2,44.6]},
+    [40]:  {60:[7.9,8.8,9.8], 80:[13.3,15.0,17.0], 100:[20.0,22.7,25.9], 120:[27.8,31.6,36.1], 140:[36.4,41.4,47.1]}
+  },
+  65: {
+    [-20]: {60:[6.2,6.9,7.8], 80:[10.4,11.7,13.2], 100:[15.5,17.5,20.0], 120:[21.4,24.3,27.8], 140:[28.0,31.8,36.3]},
+    [0]:   {60:[6.7,7.4,8.3], 80:[11.1,12.5,14.1], 100:[16.6,18.8,21.4], 120:[22.9,26.0,29.7], 140:[30.0,34.1,39.0]},
+    [15]:  {60:[7.0,7.8,8.7], 80:[11.7,13.2,14.9], 100:[17.5,19.8,22.6], 120:[24.2,27.4,31.4], 140:[31.7,36.0,41.0]},
+    [20]:  {60:[7.1,7.9,8.8], 80:[11.9,13.4,15.2], 100:[17.8,20.1,23.0], 120:[24.6,27.9,31.9], 140:[32.2,36.6,41.7]},
+    [40]:  {60:[7.4,8.2,9.2], 80:[12.5,14.0,15.9], 100:[18.7,21.2,24.2], 120:[25.9,29.5,33.7], 140:[34.0,38.6,44.1]}
+  },
+  60: {
+    [-20]: {60:[5.8,6.5,7.2], 80:[9.7,10.9,12.3], 100:[14.4,16.3,18.6], 120:[19.9,22.6,25.8], 140:[26.0,29.6,33.8]},
+    [0]:   {60:[6.3,7.0,7.8], 80:[10.4,11.7,13.2], 100:[15.4,17.5,19.9], 120:[21.3,24.2,27.6], 140:[27.9,31.7,36.2]},
+    [15]:  {60:[6.6,7.3,8.1], 80:[10.9,12.3,13.9], 100:[16.3,18.4,21.0], 120:[22.5,25.5,29.1], 140:[29.4,33.4,38.1]},
+    [20]:  {60:[6.7,7.4,8.3], 80:[11.1,12.5,14.1], 100:[16.5,18.7,21.3], 120:[22.8,25.9,29.6], 140:[29.9,34.0,38.8]},
+    [40]:  {60:[6.9,7.7,8.6], 80:[11.6,13.1,14.8], 100:[17.4,19.7,22.5], 120:[24.1,27.4,31.3], 140:[31.6,35.9,41.0]}
+  },
+  55: {
+    [-20]: {60:[5.5,6.1,6.8], 80:[9.0,10.1,11.4], 100:[13.4,15.1,17.2], 120:[18.4,20.8,23.8], 140:[24.0,27.2,31.1]},
+    [0]:   {60:[5.9,6.5,7.2], 80:[9.7,10.8,12.2], 100:[14.3,16.2,18.4], 120:[19.7,22.3,25.5], 140:[25.7,29.2,33.4]},
+    [15]:  {60:[6.1,6.8,7.6], 80:[10.2,11.4,12.8], 100:[15.1,17.0,19.4], 120:[20.7,23.5,26.9], 140:[27.1,30.8,35.2]},
+    [20]:  {60:[6.2,6.9,7.7], 80:[10.3,11.6,13.0], 100:[15.3,17.3,19.7], 120:[21.1,23.9,27.3], 140:[27.6,31.3,35.8]},
+    [40]:  {60:[6.5,7.2,8.0], 80:[10.8,12.1,13.7], 100:[16.1,18.2,20.8], 120:[22.2,25.2,28.8], 140:[29.1,33.1,37.8]}
+  },
+  50: {
+    [-20]: {60:[5.1,5.6,6.3], 80:[8.3,9.3,10.5], 100:[12.3,13.9,15.7], 120:[16.8,19.1,21.8], 140:[21.9,24.9,28.5]},
+    [0]:   {60:[5.4,6.0,6.7], 80:[8.9,10.0,11.2], 100:[13.2,14.8,16.9], 120:[18.0,20.4,23.3], 140:[23.5,26.7,30.5]},
+    [15]:  {60:[5.7,6.3,7.0], 80:[9.4,10.5,11.8], 100:[13.8,15.6,17.8], 120:[19.0,21.5,24.6], 140:[24.8,28.1,32.2]},
+    [20]:  {60:[5.8,6.4,7.1], 80:[9.5,10.7,12.0], 100:[14.1,15.9,18.1], 120:[19.3,21.9,25.0], 140:[25.2,28.6,32.7]},
+    [40]:  {60:[6.0,6.7,7.4], 80:[10.0,11.2,12.6], 100:[14.8,16.7,19.0], 120:[20.3,23.1,26.4], 140:[26.6,30.2,34.5]}
+  },
+  45: {
+    [-20]: {60:[4.7,5.2,5.8], 80:[7.7,8.6,9.6], 100:[11.2,12.6,14.3], 120:[15.3,17.3,19.7], 140:[19.9,22.5,25.7]},
+    [0]:   {60:[5.0,5.6,6.2], 80:[8.2,9.2,10.3], 100:[12.0,13.5,15.3], 120:[16.4,18.5,21.1], 140:[21.3,24.1,27.6]},
+    [15]:  {60:[5.3,5.8,6.5], 80:[8.6,9.6,10.8], 100:[12.6,14.2,16.1], 120:[17.3,19.5,22.3], 140:[22.4,25.4,29.1]},
+    [20]:  {60:[5.3,5.9,6.6], 80:[8.7,9.8,11.0], 100:[12.8,14.5,16.4], 120:[17.5,19.9,22.7], 140:[22.8,25.9,29.6]},
+    [40]:  {60:[5.5,6.2,6.8], 80:[9.1,10.2,11.5], 100:[13.5,15.2,17.3], 120:[18.5,20.9,23.9], 140:[24.0,27.3,31.2]}
+  },
+  40: {
+    [-20]: {60:[4.3,4.8,5.3], 80:[7.0,7.8,8.7], 100:[10.1,11.4,12.9], 120:[13.7,15.5,17.7], 140:[17.7,20.1,23.0]},
+    [0]:   {60:[4.6,5.1,5.7], 80:[7.5,8.3,9.3], 100:[10.9,12.2,13.8], 120:[14.7,16.6,18.9], 140:[19.0,21.5,24.6]},
+    [15]:  {60:[4.9,5.4,5.9], 80:[8.0,8.8,9.8], 100:[11.4,12.8,14.5], 120:[15.5,17.5,20.0], 140:[20.0,22.7,26.0]},
+    [20]:  {60:[4.9,5.4,6.0], 80:[8.0,8.9,10.0], 100:[11.6,13.0,14.8], 120:[15.8,17.8,20.3], 140:[20.4,23.1,26.4]},
+    [40]:  {60:[5.1,5.6,6.3], 80:[8.3,9.3,10.4], 100:[12.1,13.7,15.5], 120:[16.6,18.8,21.4], 140:[21.5,24.4,27.9]}
+  }
+};
+
+// Adjusted energy factors (reference energy 10…40 → adjusted)
+const ADJ_NO_REV = {
+  "RTO MAX MAN": [10,15,20,25,30,35,40],
+  "MAX MAN":     [8.6,13.3,18.1,22.8,27.5,32.3,37.0],
+  "MAX AUTO":    [8.1,12.3,16.6,21.0,25.4,29.9,34.4],
+  "AUTOBRAKE 3": [8.0,11.6,15.3,19.2,23.1,27.1,31.2],
+  "AUTOBRAKE 2": [7.8,11.0,14.3,17.6,21.1,24.6,28.3],
+  "AUTOBRAKE 1": [7.5,10.4,13.4,16.3,19.4,22.5,25.6]
+};
+const ADJ_REV = {
+  "RTO MAX MAN": [10,15,20,25,30,35,40],
+  "MAX MAN":     [8.2,12.5,16.7,20.9,25.0,29.0,33.0],
+  "MAX AUTO":    [6.0,9.4,12.8,16.4,20.1,23.8,27.7],
+  "AUTOBRAKE 3": [3.2,5.2,7.4,9.7,12.2,14.8,17.5],
+  "AUTOBRAKE 2": [1.4,2.5,3.8,5.2,6.8,8.5,10.3],
+  "AUTOBRAKE 1": [0.6,1.3,2.1,3.0,3.9,5.0,6.2]
+};
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function getRefEnergy(weightT, oat, altKft, speed) {
+  // Clamp / find surrounding weights
+  const weights = [40,45,50,55,60,65,70];
+  let w1 = weights[0], w2 = weights[weights.length-1];
+  for (let i = 0; i < weights.length-1; i++) {
+    if (weightT >= weights[i] && weightT <= weights[i+1]) {
+      w1 = weights[i]; w2 = weights[i+1]; break;
+    }
+  }
+  if (weightT <= 40) { w1 = w2 = 40; }
+  if (weightT >= 70) { w1 = w2 = 70; }
+
+  const oats = [-20,0,15,20,40];
+  let o1 = oats[0], o2 = oats[oats.length-1];
+  for (let i = 0; i < oats.length-1; i++) {
+    if (oat >= oats[i] && oat <= oats[i+1]) {
+      o1 = oats[i]; o2 = oats[i+1]; break;
+    }
+  }
+  if (oat <= -20) { o1 = o2 = -20; }
+  if (oat >= 40) { o1 = o2 = 40; }
+
+  const speeds = [60,80,100,120,140];
+  let s1 = speeds[0], s2 = speeds[speeds.length-1];
+  for (let i = 0; i < speeds.length-1; i++) {
+    if (speed >= speeds[i] && speed <= speeds[i+1]) {
+      s1 = speeds[i]; s2 = speeds[i+1]; break;
+    }
+  }
+  if (speed <= 60) { s1 = s2 = 60; }
+  if (speed >= 140) { s1 = s2 = 140; }
+
+  // Altitude interpolation helper (0 / 4 / 8)
+  function energyAt(w, o, s, a) {
+    const row = ENERGY_TABLE[w][o][s];
+    if (a <= 0) return row[0];
+    if (a >= 8) return row[2];
+    if (a <= 4) return lerp(row[0], row[1], a / 4);
+    return lerp(row[1], row[2], (a - 4) / 4);
+  }
+
+  // Interpolate over weight, OAT, speed
+  function at(w, o, s) {
+    return energyAt(w, o, s, altKft);
+  }
+
+  // Trilinear-ish
+  const tw = (w2 === w1) ? 0 : (weightT - w1) / (w2 - w1);
+  const to = (o2 === o1) ? 0 : (oat - o1) / (o2 - o1);
+  const ts = (s2 === s1) ? 0 : (speed - s1) / (s2 - s1);
+
+  const e11 = lerp(at(w1,o1,s1), at(w1,o1,s2), ts);
+  const e12 = lerp(at(w1,o2,s1), at(w1,o2,s2), ts);
+  const e1  = lerp(e11, e12, to);
+
+  const e21 = lerp(at(w2,o1,s1), at(w2,o1,s2), ts);
+  const e22 = lerp(at(w2,o2,s1), at(w2,o2,s2), ts);
+  const e2  = lerp(e21, e22, to);
+
+  return lerp(e1, e2, tw);
+}
+
+function adjustEnergy(refE, event, brakeCfg, useRev) {
+  // Map reference energy (approx 10-40 scale) to adjusted
+  // We treat the table as linear between the reference points 10,15,...,40
+  const refs = [10,15,20,25,30,35,40];
+  let table;
+  if (event === 'rto') {
+    table = useRev ? ADJ_REV["RTO MAX MAN"] : ADJ_NO_REV["RTO MAX MAN"];
+  } else {
+    const key = brakeCfg;
+    table = useRev ? ADJ_REV[key] : ADJ_NO_REV[key];
+  }
+  if (!table) return refE;
+
+  // Find segment
+  if (refE <= 10) return table[0] * (refE / 10);
+  if (refE >= 40) {
+    // extrapolate from last segment
+    const last = table[table.length-1];
+    const prev = table[table.length-2];
+    return last + (last - prev) * ((refE - 40) / 5);
+  }
+  for (let i = 0; i < refs.length-1; i++) {
+    if (refE >= refs[i] && refE <= refs[i+1]) {
+      const t = (refE - refs[i]) / 5;
+      return lerp(table[i], table[i+1], t);
+    }
+  }
+  return refE;
+}
+
+function coolingStatus(adjE) {
+  if (adjE <= 8) return {level:'ok', ground:0, inflight:0, text:'No special cooling required'};
+  if (adjE <= 10) return {level:'ok', ground:19, inflight:2, text:'Normal cooling schedule'};
+  if (adjE <= 12) return {level:'ok', ground:32, inflight:3, text:'Normal cooling schedule'};
+  if (adjE <= 14) return {level:'ok', ground:43, inflight:4, text:'Normal cooling schedule'};
+  if (adjE <= 16) return {level:'ok', ground:53, inflight:5, text:'Normal cooling schedule'};
+  if (adjE <= 18) return {level:'ok', ground:61, inflight:6, text:'Normal cooling schedule'};
+  if (adjE < 18.5) return {level:'ok', ground:61, inflight:6, text:'Approaching caution zone'};
+  if (adjE <= 23.7) return {level:'warn', ground:null, inflight:7, text:'CAUTION ZONE – Fuse plugs may melt. Delay takeoff & inspect after 1 hour. If overheat after takeoff, extend gear ≥ 7 min.'};
+  return {level:'danger', ground:null, inflight:12, text:'FUSE PLUG MELT ZONE – Clear runway immediately. Do not set parking brake. Do not approach gear for 1 hour. Tire/wheel/brake replacement may be required. If overheat after takeoff extend gear ≥ 12 min.'};
+}
+
+function calcCooling() {
+  const weightT = +document.getElementById('bc-weight').value || 48;
+  const oat = +document.getElementById('bc-oat').value || 15;
+  const altKft = +document.getElementById('bc-alt').value || 0;
+  const speed = +document.getElementById('bc-speed').value || 100;
+  const event = document.getElementById('bc-event').value;
+  const useRev = document.getElementById('bc-rev').value === '2';
+  const brakeCfg = document.getElementById('bc-brake').value;
+  const taxi = +document.getElementById('bc-taxi').value || 0;
+
+  const refE = getRefEnergy(weightT, oat, altKft, speed);
+  let adjE = adjustEnergy(refE, event, brakeCfg, useRev);
+  adjE += taxi * 1.0;  // +1.0 M ft-lb per taxi mile
+
+  const st = coolingStatus(adjE);
+
+  // Primary display: minutes
+  if (st.ground === 0) {
+    document.getElementById('bc-time').innerHTML = '0 <span>min</span>';
+    document.getElementById('bc-time-detail').textContent = 'No cooling required';
+  } else if (st.ground != null) {
+    document.getElementById('bc-time').innerHTML = st.ground + ' <span>min ground</span>';
+    document.getElementById('bc-time-detail').textContent =
+      'Inflight gear down: ' + st.inflight + ' min';
+  } else {
+    // Caution / melt zone – no normal ground cooling time
+    document.getElementById('bc-time').innerHTML = (st.level === 'danger' ? '≥ 60' : '≥ 60') + ' <span>min</span>';
+    document.getElementById('bc-time-detail').textContent =
+      'Inflight gear extend ≥ ' + st.inflight + ' min · see caution below';
+  }
+
+  document.getElementById('bc-break').innerHTML = `
+    <div><span>Ground cooling</span><span class="val">${st.ground != null ? st.ground + ' min' : '1 hour inspect'}</span></div>
+    <div><span>Inflight (gear down)</span><span class="val">${st.inflight != null ? '≥ ' + st.inflight + ' min' : '—'}</span></div>
+    <div><span>Brake energy (ref → adj)</span><span class="val">${refE.toFixed(1)} → ${adjE.toFixed(1)} M ft-lb</span></div>
+    <div><span>${event === 'rto' ? 'RTO Max Man' : brakeCfg}${useRev ? ' · 2 eng rev' : ' · no rev'}${taxi > 0 ? ' · taxi +' + taxi.toFixed(1) : ''}</span></div>
+  `;
+
+  const statusEl = document.getElementById('bc-status');
+  statusEl.style.display = 'block';
+  statusEl.className = st.level === 'ok' ? 'ok' : (st.level === 'warn' ? 'warn' : 'warn danger');
+  statusEl.textContent = st.text;
+
+  document.getElementById('bc-notes').innerHTML = `
+    Cooling times from QRH Recommended Brake Cooling Schedule (Category A brakes).<br>
+    Single stop, all brakes operating. Add residual energy if present. Observe max quick turnaround limit.
+  `;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.getElementById('tab-landing').classList.toggle('section-hidden', name !== 'landing');
+  document.getElementById('tab-cooling').classList.toggle('section-hidden', name !== 'cooling');
+  if (name === 'landing') calcLanding();
+  else calcCooling();
+}
+
+// Sync weight between tabs
+document.getElementById('ld-weight').addEventListener('input', () => {
+  const kg = +document.getElementById('ld-weight').value;
+  if (kg) document.getElementById('bc-weight').value = (kg / 1000).toFixed(1);
+  calcLanding();
+});
+document.getElementById('bc-weight').addEventListener('input', () => {
+  const t = +document.getElementById('bc-weight').value;
+  if (t) document.getElementById('ld-weight').value = Math.round(t * 1000);
+});
+
+// Init
+populateAirportList();
+calcLanding();
+calcCooling();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>

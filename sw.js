@@ -1,4 +1,4 @@
-const CACHE = 'b733-perf-v1';
+const CACHE = 'b733-perf-v4';
 const FILES = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', event => {
