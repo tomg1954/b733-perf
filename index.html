@@ -195,33 +195,57 @@
   .ld-table td.over { color: #f87171; }
   .ld-table td.cond { text-align: left; color: var(--muted); font-weight: 500; font-size: 11px; padding-left: 10px; }
   .rwy-panel {
-    width: 140px; flex-shrink: 0;
+    width: 200px; flex-shrink: 0;
     background: #0b1220; border-radius: 12px; padding: 12px 10px;
-    border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center;
+    border: 1px solid var(--border); display: flex; flex-direction: column; align-items: stretch;
   }
-  .rwy-lda { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .rwy-lda { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-align: center; }
   .rwy-lda strong { color: #fbbf24; font-size: 14px; }
+  .rwy-diagram {
+    position: relative; height: 300px; margin: 4px 0 8px 0;
+  }
   .rwy-bar {
-    position: relative; width: 36px; height: 280px;
+    position: absolute; left: 8px; top: 0; bottom: 0; width: 28px;
     background: linear-gradient(180deg, #1e3a5f 0%, #0f2744 100%);
     border-radius: 4px; border: 2px solid #334155; overflow: hidden;
   }
   .rwy-fill {
-    position: absolute; bottom: 0; left: 0; right: 0;
+    position: absolute; bottom: 0; left: 0; right: 0; height: 100%;
     background: repeating-linear-gradient(
       0deg, transparent, transparent 8px, rgba(255,255,255,0.04) 8px, rgba(255,255,255,0.04) 16px
     );
   }
   .rwy-mark {
-    position: absolute; left: -4px; right: -4px; height: 2px;
-    background: currentColor;
+    position: absolute; left: 0; right: 0; height: 0;
+    pointer-events: none;
+  }
+  .rwy-mark .tick {
+    position: absolute; left: 8px; width: 28px; height: 3px;
+    background: currentColor; border-radius: 1px;
   }
   .rwy-mark label {
-    position: absolute; left: 44px; top: -7px; white-space: nowrap;
-    font-size: 10px; font-weight: 700; color: inherit;
+    position: absolute; left: 42px; top: -8px; white-space: nowrap;
+    font-size: 11px; font-weight: 700; color: inherit;
+    background: rgba(11,18,32,0.85); padding: 1px 4px; border-radius: 3px;
   }
-  .rwy-meta { margin-top: 10px; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
+  .rwy-mark.exit .tick {
+    height: 2px; background: #f8fafc;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.4);
+  }
+  .rwy-mark.exit label { color: #f8fafc; font-weight: 800; }
+  .rwy-meta { margin-top: 4px; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.45; }
   .rwy-meta strong { color: var(--text); }
+  .exit-row { margin-top: 8px; }
+  .exit-row label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .exit-row input {
+    width: 100%; background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 8px; font-size: 14px; font-weight: 600;
+  }
+  .exit-status {
+    margin-top: 6px; font-size: 11px; font-weight: 600; text-align: center; min-height: 16px;
+  }
+  .exit-status.ok { color: #4ade80; }
+  .exit-status.no { color: #f87171; }
   .ld-toggle {
     display: flex; gap: 0; margin-bottom: 10px; border-radius: 8px; overflow: hidden;
     border: 1px solid var(--border); width: fit-content;
@@ -396,13 +420,18 @@
           </div>
           <div class="rwy-panel">
             <div class="rwy-lda">LDA <strong id="rwy-lda-val">—</strong></div>
-            <div class="rwy-bar" id="rwy-bar">
-              <div class="rwy-fill" style="height:100%"></div>
-              <!-- markers injected by JS -->
+            <div class="rwy-diagram" id="rwy-diagram">
+              <div class="rwy-bar">
+                <div class="rwy-fill"></div>
+              </div>
+              <!-- markers injected by JS into #rwy-diagram -->
             </div>
-            <div class="rwy-meta" id="rwy-meta">
-              —
+            <div class="rwy-meta" id="rwy-meta">—</div>
+            <div class="exit-row">
+              <label>Exit / intersection from THR (m)</label>
+              <input type="number" id="ld-exit" value="" min="200" max="5000" step="10" inputmode="numeric" placeholder="e.g. 1600" oninput="calcLanding()">
             </div>
+            <div class="exit-status" id="exit-status"></div>
           </div>
         </div>
         <div class="breakdown" id="ld-break" style="margin-top:12px"></div>
@@ -469,8 +498,9 @@
       </div>
 
       <div class="result-box" id="bc-result">
-        <div class="result-sub">Adjusted Brake Energy per Brake</div>
-        <div class="result-main" id="bc-energy">— <span>M ft-lb</span></div>
+        <div class="result-sub">Recommended Brake Cooling Time</div>
+        <div class="result-main" id="bc-time">— <span>min</span></div>
+        <div class="result-sub" id="bc-time-detail" style="margin-top:4px">—</div>
         <div class="breakdown" id="bc-break"></div>
         <div id="bc-status" class="warn" style="display:none"></div>
         <div class="note" id="bc-notes"></div>
@@ -591,70 +621,70 @@ let currentFlaps = 30;
 // ============================================================
 const AIRPORTS = [
   { iata:"ALC", icao:"LEAL", name:"Alicante", elev:142, rwys:[{id:"10",hdg:100,lda:3000},{id:"28",hdg:280,lda:3000}] },
-  { iata:"AGP", icao:"LEMG", name:"Malaga", elev:52, rwys:[{id:"12",hdg:120,lda:2750},{id:"13",hdg:130,lda:3200},{id:"30",hdg:300,lda:2750},{id:"31",hdg:310,lda:3200}] },
+  { iata:"AGP", icao:"LEMG", name:"Malaga", elev:52, rwys:[{id:"12",hdg:117,lda:2750},{id:"13",hdg:131,lda:3200},{id:"30",hdg:297,lda:2750},{id:"31",hdg:311,lda:3200}] },
   { iata:"PMI", icao:"LEPA", name:"Palma de Mallorca", elev:27, rwys:[{id:"06L",hdg:57,lda:3270},{id:"06R",hdg:57,lda:2590},{id:"24L",hdg:237,lda:3000},{id:"24R",hdg:237,lda:3200}] },
-  { iata:"TFS", icao:"GCTS", name:"Tenerife South", elev:209, rwys:[{id:"07",hdg:74,lda:3200},{id:"25",hdg:254,lda:3200}] },
-  { iata:"ACE", icao:"GCRR", name:"Lanzarote", elev:47, rwys:[{id:"03",hdg:30,lda:2400},{id:"21",hdg:210,lda:2400}] },
-  { iata:"LPA", icao:"GCLP", name:"Gran Canaria", elev:78, rwys:[{id:"03L",hdg:30,lda:3100},{id:"03R",hdg:30,lda:3100},{id:"21L",hdg:210,lda:3100},{id:"21R",hdg:210,lda:3100}] },
-  { iata:"FUE", icao:"GCFV", name:"Fuerteventura", elev:85, rwys:[{id:"01",hdg:11,lda:2400},{id:"19",hdg:191,lda:2400}] },
-  { iata:"IBZ", icao:"LEIB", name:"Ibiza", elev:24, rwys:[{id:"06",hdg:60,lda:2800},{id:"24",hdg:240,lda:2800}] },
-  { iata:"MAH", icao:"LEMH", name:"Menorca", elev:287, rwys:[{id:"01",hdg:12,lda:2100},{id:"19",hdg:192,lda:2350}] },
-  { iata:"GRO", icao:"LEGE", name:"Girona", elev:468, rwys:[{id:"01",hdg:14,lda:2400},{id:"19",hdg:194,lda:2400}] },
-  { iata:"REU", icao:"LERS", name:"Reus", elev:233, rwys:[{id:"07",hdg:74,lda:2455},{id:"25",hdg:254,lda:2455}] },
-  { iata:"LEI", icao:"LEAM", name:"Almeria", elev:70, rwys:[{id:"08",hdg:80,lda:3200},{id:"26",hdg:260,lda:3200}] },
-  { iata:"FAO", icao:"LPFR", name:"Faro", elev:24, rwys:[{id:"10",hdg:100,lda:2490},{id:"28",hdg:280,lda:2490}] },
-  { iata:"FNC", icao:"LPMA", name:"Madeira", elev:192, rwys:[{id:"05",hdg:50,lda:2481},{id:"23",hdg:230,lda:1800}] },
-  { iata:"AYT", icao:"LTAI", name:"Antalya", elev:177, rwys:[{id:"18C",hdg:180,lda:3400},{id:"36C",hdg:360,lda:3400},{id:"18L",hdg:180,lda:2990},{id:"36R",hdg:360,lda:2990}] },
+  { iata:"TFS", icao:"GCTS", name:"Tenerife South", elev:209, rwys:[{id:"07",hdg:72,lda:3200},{id:"25",hdg:252,lda:3200}] },
+  { iata:"ACE", icao:"GCRR", name:"Lanzarote", elev:47, rwys:[{id:"03",hdg:26,lda:2400},{id:"21",hdg:206,lda:2400}] },
+  { iata:"LPA", icao:"GCLP", name:"Gran Canaria", elev:78, rwys:[{id:"03L",hdg:25,lda:3100},{id:"03R",hdg:25,lda:3100},{id:"21L",hdg:205,lda:3100},{id:"21R",hdg:205,lda:3100}] },
+  { iata:"FUE", icao:"GCFV", name:"Fuerteventura", elev:85, rwys:[{id:"01",hdg:12,lda:2400},{id:"19",hdg:192,lda:2400}] },
+  { iata:"IBZ", icao:"LEIB", name:"Ibiza", elev:24, rwys:[{id:"06",hdg:61,lda:2800},{id:"24",hdg:241,lda:2800}] },
+  { iata:"MAH", icao:"LEMH", name:"Menorca", elev:287, rwys:[{id:"01",hdg:13,lda:2100},{id:"19",hdg:193,lda:2350}] },
+  { iata:"GRO", icao:"LEGE", name:"Girona", elev:468, rwys:[{id:"01",hdg:13,lda:2400},{id:"19",hdg:193,lda:2400}] },
+  { iata:"REU", icao:"LERS", name:"Reus", elev:233, rwys:[{id:"07",hdg:72,lda:2455},{id:"25",hdg:252,lda:2455}] },
+  { iata:"LEI", icao:"LEAM", name:"Almeria", elev:70, rwys:[{id:"08",hdg:81,lda:3200},{id:"26",hdg:261,lda:3200}] },
+  { iata:"FAO", icao:"LPFR", name:"Faro", elev:24, rwys:[{id:"10",hdg:104,lda:2490},{id:"28",hdg:284,lda:2490}] },
+  { iata:"FNC", icao:"LPMA", name:"Madeira", elev:192, rwys:[{id:"05",hdg:48,lda:2481},{id:"23",hdg:228,lda:1800}] },
+  { iata:"AYT", icao:"LTAI", name:"Antalya", elev:177, rwys:[{id:"18C",hdg:181,lda:3400},{id:"36C",hdg:1,lda:3400},{id:"18L",hdg:181,lda:2990},{id:"36R",hdg:1,lda:2990}] },
   { iata:"BJV", icao:"LTFE", name:"Bodrum", elev:21, rwys:[{id:"10",hdg:102,lda:3000},{id:"28",hdg:282,lda:3000}] },
-  { iata:"DLM", icao:"LTBS", name:"Dalaman", elev:20, rwys:[{id:"01",hdg:12,lda:3000},{id:"19",hdg:192,lda:3000}] },
+  { iata:"DLM", icao:"LTBS", name:"Dalaman", elev:20, rwys:[{id:"01",hdg:11,lda:3000},{id:"19",hdg:191,lda:3000}] },
   { iata:"ADB", icao:"LTBJ", name:"Izmir", elev:412, rwys:[{id:"16L",hdg:164,lda:3240},{id:"34R",hdg:344,lda:3240},{id:"16R",hdg:164,lda:3224},{id:"34L",hdg:344,lda:3224}] },
   { iata:"HER", icao:"LGIR", name:"Heraklion", elev:115, rwys:[{id:"09",hdg:90,lda:2680},{id:"27",hdg:270,lda:2680}] },
-  { iata:"CHQ", icao:"LGSA", name:"Chania", elev:490, rwys:[{id:"11",hdg:110,lda:3347},{id:"29",hdg:290,lda:3347}] },
-  { iata:"CFU", icao:"LGKR", name:"Corfu", elev:6, rwys:[{id:"17",hdg:168,lda:2373},{id:"35",hdg:348,lda:2373}] },
-  { iata:"RHO", icao:"LGRP", name:"Rhodes", elev:17, rwys:[{id:"06",hdg:63,lda:3305},{id:"24",hdg:243,lda:3305}] },
-  { iata:"KGS", icao:"LGKO", name:"Kos", elev:412, rwys:[{id:"14",hdg:143,lda:2390},{id:"32",hdg:323,lda:2390}] },
-  { iata:"ZTH", icao:"LGZA", name:"Zante", elev:15, rwys:[{id:"16",hdg:164,lda:2228},{id:"34",hdg:344,lda:2228}] },
-  { iata:"EFL", icao:"LGKF", name:"Kefalonia", elev:60, rwys:[{id:"14",hdg:140,lda:2438},{id:"32",hdg:320,lda:2438}] },
-  { iata:"JSI", icao:"LGSK", name:"Skiathos", elev:54, rwys:[{id:"01",hdg:14,lda:1628},{id:"19",hdg:194,lda:1628}] },
-  { iata:"KLX", icao:"LGKL", name:"Kalamata", elev:26, rwys:[{id:"17R",hdg:170,lda:2703},{id:"35L",hdg:350,lda:2703}] },
-  { iata:"PVK", icao:"LGPZ", name:"Preveza", elev:11, rwys:[{id:"07L",hdg:70,lda:2871},{id:"25R",hdg:250,lda:2871}] },
-  { iata:"SKG", icao:"LGTS", name:"Thessaloniki", elev:22, rwys:[{id:"10",hdg:100,lda:2410},{id:"28",hdg:280,lda:2410}] },
-  { iata:"BOJ", icao:"LBBG", name:"Burgas", elev:135, rwys:[{id:"04",hdg:40,lda:3200},{id:"22",hdg:220,lda:3200}] },
-  { iata:"MLA", icao:"LMML", name:"Malta", elev:300, rwys:[{id:"13",hdg:134,lda:3544},{id:"31",hdg:314,lda:3377},{id:"05",hdg:51,lda:2377},{id:"23",hdg:231,lda:2377}] },
+  { iata:"CHQ", icao:"LGSA", name:"Chania", elev:490, rwys:[{id:"11",hdg:114,lda:3347},{id:"29",hdg:294,lda:3347}] },
+  { iata:"CFU", icao:"LGKR", name:"Corfu", elev:6, rwys:[{id:"17",hdg:169,lda:2373},{id:"35",hdg:349,lda:2373}] },
+  { iata:"RHO", icao:"LGRP", name:"Rhodes", elev:17, rwys:[{id:"06",hdg:65,lda:3305},{id:"24",hdg:245,lda:3305}] },
+  { iata:"KGS", icao:"LGKO", name:"Kos", elev:412, rwys:[{id:"14",hdg:141,lda:2390},{id:"32",hdg:321,lda:2390}] },
+  { iata:"ZTH", icao:"LGZA", name:"Zante", elev:15, rwys:[{id:"16",hdg:163,lda:2228},{id:"34",hdg:343,lda:2228}] },
+  { iata:"EFL", icao:"LGKF", name:"Kefalonia", elev:60, rwys:[{id:"14",hdg:141,lda:2438},{id:"32",hdg:321,lda:2438}] },
+  { iata:"JSI", icao:"LGSK", name:"Skiathos", elev:54, rwys:[{id:"01",hdg:15,lda:1628},{id:"19",hdg:195,lda:1628}] },
+  { iata:"KLX", icao:"LGKL", name:"Kalamata", elev:26, rwys:[{id:"17R",hdg:174,lda:2703},{id:"35L",hdg:354,lda:2703}] },
+  { iata:"PVK", icao:"LGPZ", name:"Preveza", elev:11, rwys:[{id:"07L",hdg:68,lda:2871},{id:"25R",hdg:248,lda:2871}] },
+  { iata:"SKG", icao:"LGTS", name:"Thessaloniki", elev:22, rwys:[{id:"10",hdg:103,lda:2410},{id:"28",hdg:283,lda:2410}] },
+  { iata:"BOJ", icao:"LBBG", name:"Burgas", elev:135, rwys:[{id:"04",hdg:41,lda:3200},{id:"22",hdg:221,lda:3200}] },
+  { iata:"MLA", icao:"LMML", name:"Malta", elev:300, rwys:[{id:"13",hdg:135,lda:3544},{id:"31",hdg:315,lda:3377},{id:"05",hdg:52,lda:2377},{id:"23",hdg:232,lda:2377}] },
   { iata:"PFO", icao:"LCPH", name:"Paphos", elev:41, rwys:[{id:"11",hdg:110,lda:2700},{id:"29",hdg:290,lda:2700}] },
   { iata:"LCA", icao:"LCLK", name:"Larnaca", elev:8, rwys:[{id:"04",hdg:41,lda:2994},{id:"22",hdg:221,lda:2994}] },
-  { iata:"NAP", icao:"LIRN", name:"Naples", elev:294, rwys:[{id:"06",hdg:62,lda:2628},{id:"24",hdg:242,lda:2628}] },
-  { iata:"VRN", icao:"LIPX", name:"Verona", elev:235, rwys:[{id:"04",hdg:43,lda:3068},{id:"22",hdg:223,lda:3068}] },
+  { iata:"NAP", icao:"LIRN", name:"Naples", elev:294, rwys:[{id:"06",hdg:56,lda:2628},{id:"24",hdg:236,lda:2628}] },
+  { iata:"VRN", icao:"LIPX", name:"Verona", elev:235, rwys:[{id:"04",hdg:42,lda:3068},{id:"22",hdg:222,lda:3068}] },
   { iata:"VCE", icao:"LIPZ", name:"Venice", elev:7, rwys:[{id:"04R",hdg:42,lda:3300},{id:"22L",hdg:222,lda:2800}] },
-  { iata:"PMO", icao:"LICJ", name:"Palermo", elev:65, rwys:[{id:"07",hdg:70,lda:3326},{id:"25",hdg:250,lda:3326}] },
-  { iata:"DBV", icao:"LDDU", name:"Dubrovnik", elev:527, rwys:[{id:"11",hdg:114,lda:3300},{id:"29",hdg:294,lda:3100}] },
-  { iata:"SPU", icao:"LDSP", name:"Split", elev:79, rwys:[{id:"05",hdg:53,lda:2550},{id:"23",hdg:233,lda:2550}] },
+  { iata:"PMO", icao:"LICJ", name:"Palermo", elev:65, rwys:[{id:"07",hdg:72,lda:3326},{id:"25",hdg:252,lda:3326}] },
+  { iata:"DBV", icao:"LDDU", name:"Dubrovnik", elev:527, rwys:[{id:"11",hdg:116,lda:3300},{id:"29",hdg:296,lda:3100}] },
+  { iata:"SPU", icao:"LDSP", name:"Split", elev:79, rwys:[{id:"05",hdg:51,lda:2550},{id:"23",hdg:231,lda:2550}] },
   { iata:"PUY", icao:"LDPL", name:"Pula", elev:274, rwys:[{id:"09",hdg:90,lda:2946},{id:"27",hdg:270,lda:2946}] },
-  { iata:"TIV", icao:"LYTV", name:"Tivat", elev:20, rwys:[{id:"14",hdg:140,lda:2500},{id:"32",hdg:320,lda:2500}] },
-  { iata:"AGA", icao:"GMAD", name:"Agadir", elev:226, rwys:[{id:"09",hdg:90,lda:3200},{id:"27",hdg:270,lda:3200}] },
+  { iata:"TIV", icao:"LYTV", name:"Tivat", elev:20, rwys:[{id:"14",hdg:141,lda:2500},{id:"32",hdg:321,lda:2500}] },
+  { iata:"AGA", icao:"GMAD", name:"Agadir", elev:226, rwys:[{id:"09",hdg:91,lda:3200},{id:"27",hdg:271,lda:3200}] },
   { iata:"RAK", icao:"GMMX", name:"Marrakech", elev:1545, rwys:[{id:"10",hdg:100,lda:3100},{id:"28",hdg:280,lda:3100}] },
-  { iata:"HRG", icao:"HEGN", name:"Hurghada", elev:52, rwys:[{id:"16",hdg:160,lda:4000},{id:"34",hdg:340,lda:4000}] },
-  { iata:"SSH", icao:"HESH", name:"Sharm El Sheikh", elev:143, rwys:[{id:"04L",hdg:42,lda:3081},{id:"22R",hdg:222,lda:3081},{id:"04R",hdg:42,lda:3081},{id:"22L",hdg:222,lda:3081}] },
+  { iata:"HRG", icao:"HEGN", name:"Hurghada", elev:52, rwys:[{id:"16",hdg:158,lda:4000},{id:"34",hdg:338,lda:4000}] },
+  { iata:"SSH", icao:"HESH", name:"Sharm El Sheikh", elev:143, rwys:[{id:"04L",hdg:40,lda:3081},{id:"22R",hdg:220,lda:3081},{id:"04R",hdg:40,lda:3081},{id:"22L",hdg:220,lda:3081}] },
   { iata:"NBE", icao:"DTNH", name:"Enfidha", elev:21, rwys:[{id:"09",hdg:90,lda:3300},{id:"27",hdg:270,lda:3300}] },
-  { iata:"GVA", icao:"LSGG", name:"Geneva", elev:1411, rwys:[{id:"04",hdg:44,lda:3900},{id:"22",hdg:224,lda:3900}] },
+  { iata:"GVA", icao:"LSGG", name:"Geneva", elev:1411, rwys:[{id:"04",hdg:42,lda:3900},{id:"22",hdg:222,lda:3900}] },
   { iata:"INN", icao:"LOWI", name:"Innsbruck", elev:1906, rwys:[{id:"08",hdg:79,lda:2000},{id:"26",hdg:259,lda:2000}] },
-  { iata:"SZG", icao:"LOWS", name:"Salzburg", elev:1411, rwys:[{id:"15",hdg:151,lda:2750},{id:"33",hdg:331,lda:2750}] },
+  { iata:"SZG", icao:"LOWS", name:"Salzburg", elev:1411, rwys:[{id:"15",hdg:156,lda:2750},{id:"33",hdg:336,lda:2750}] },
   { iata:"VIE", icao:"LOWW", name:"Vienna", elev:600, rwys:[{id:"11",hdg:114,lda:3500},{id:"29",hdg:294,lda:3500},{id:"16",hdg:164,lda:3600},{id:"34",hdg:344,lda:3600}] },
   { iata:"LBA", icao:"EGNM", name:"Leeds Bradford", elev:681, rwys:[{id:"14",hdg:138,lda:1801},{id:"32",hdg:318,lda:1916}] },
   { iata:"MAN", icao:"EGCC", name:"Manchester", elev:257, rwys:[{id:"05L",hdg:51,lda:2587},{id:"23R",hdg:231,lda:2714},{id:"05R",hdg:51,lda:2864},{id:"23L",hdg:231,lda:2864}] },
   { iata:"BHX", icao:"EGBB", name:"Birmingham", elev:327, rwys:[{id:"15",hdg:152,lda:2605},{id:"33",hdg:332,lda:3052}] },
-  { iata:"NCL", icao:"EGNT", name:"Newcastle", elev:266, rwys:[{id:"07",hdg:70,lda:2329},{id:"25",hdg:250,lda:2329}] },
-  { iata:"STN", icao:"EGSS", name:"London Stansted", elev:348, rwys:[{id:"04",hdg:41,lda:3048},{id:"22",hdg:221,lda:3048}] },
+  { iata:"NCL", icao:"EGNT", name:"Newcastle", elev:266, rwys:[{id:"07",hdg:66,lda:2329},{id:"25",hdg:246,lda:2329}] },
+  { iata:"STN", icao:"EGSS", name:"London Stansted", elev:348, rwys:[{id:"04",hdg:40,lda:3048},{id:"22",hdg:220,lda:3048}] },
   { iata:"BRS", icao:"EGGD", name:"Bristol", elev:622, rwys:[{id:"09",hdg:88,lda:2011},{id:"27",hdg:268,lda:2011}] },
   { iata:"EDI", icao:"EGPH", name:"Edinburgh", elev:135, rwys:[{id:"06",hdg:59,lda:2556},{id:"24",hdg:239,lda:2556}] },
   { iata:"EMA", icao:"EGNX", name:"East Midlands", elev:306, rwys:[{id:"09",hdg:92,lda:2893},{id:"27",hdg:272,lda:2893}] },
   { iata:"GLA", icao:"EGPF", name:"Glasgow", elev:26, rwys:[{id:"05",hdg:51,lda:2665},{id:"23",hdg:231,lda:2665}] },
   { iata:"BFS", icao:"EGAA", name:"Belfast International", elev:268, rwys:[{id:"07",hdg:70,lda:2780},{id:"25",hdg:250,lda:2780},{id:"17",hdg:173,lda:1890},{id:"35",hdg:353,lda:1890}] },
   { iata:"LPL", icao:"EGGP", name:"Liverpool", elev:80, rwys:[{id:"09",hdg:87,lda:2286},{id:"27",hdg:267,lda:2286}] },
-  { iata:"BOH", icao:"EGHH", name:"Bournemouth", elev:38, rwys:[{id:"08",hdg:80,lda:2271},{id:"26",hdg:260,lda:2271}] },
-  { iata:"LGW", icao:"EGKK", name:"London Gatwick", elev:202, rwys:[{id:"08L",hdg:80,lda:2565},{id:"26R",hdg:260,lda:2565},{id:"08R",hdg:80,lda:3316},{id:"26L",hdg:260,lda:3159}] },
+  { iata:"BOH", icao:"EGHH", name:"Bournemouth", elev:38, rwys:[{id:"08",hdg:79,lda:2271},{id:"26",hdg:259,lda:2271}] },
+  { iata:"LGW", icao:"EGKK", name:"London Gatwick", elev:202, rwys:[{id:"08L",hdg:79,lda:2565},{id:"26R",hdg:259,lda:2565},{id:"08R",hdg:79,lda:3316},{id:"26L",hdg:259,lda:3159}] },
   { iata:"LTN", icao:"EGGW", name:"London Luton", elev:526, rwys:[{id:"07",hdg:74,lda:2162},{id:"25",hdg:254,lda:2162}] },
-  { iata:"JER", icao:"EGJJ", name:"Jersey", elev:277, rwys:[{id:"08",hdg:82,lda:1706},{id:"26",hdg:262,lda:1706}] }
+  { iata:"JER", icao:"EGJJ", name:"Jersey", elev:277, rwys:[{id:"08",hdg:84,lda:1706},{id:"26",hdg:264,lda:1706}] }
 ];
 
 function populateAirportList() {
@@ -814,9 +844,8 @@ function calcLanding() {
 
   // Runway visual
   document.getElementById('rwy-lda-val').textContent = Math.round(lda) + ' m';
-  const bar = document.getElementById('rwy-bar');
-  // clear old marks
-  bar.querySelectorAll('.rwy-mark').forEach(el => el.remove());
+  const diagram = document.getElementById('rwy-diagram');
+  diagram.querySelectorAll('.rwy-mark').forEach(el => el.remove());
 
   const colors = {
     "MAX MANUAL": "#22c55e",
@@ -829,19 +858,45 @@ function calcLanding() {
   order.forEach(bk => {
     const m = selectedDists[bk];
     if (m == null) return;
-    const pct = Math.min(100, (m / lda) * 100);
+    const pct = Math.min(100, Math.max(0, (m / lda) * 100));
     const fromTop = 100 - pct;
     const mark = document.createElement('div');
     mark.className = 'rwy-mark';
     mark.style.top = fromTop + '%';
     mark.style.color = colors[bk] || '#fff';
     const short = BRAKE_SHORT[BRAKE_KEYS.indexOf(bk)];
-    mark.innerHTML = `<label>${short} ${m} m</label>`;
-    bar.appendChild(mark);
+    mark.innerHTML = `<div class="tick"></div><label>${short} · ${m} m</label>`;
+    diagram.appendChild(mark);
   });
 
+  // Exit / intersection line
+  const exitM = +document.getElementById('ld-exit').value;
+  const exitStatus = document.getElementById('exit-status');
+  if (exitM > 0 && lda > 0) {
+    const pct = Math.min(100, Math.max(0, (exitM / lda) * 100));
+    const fromTop = 100 - pct;
+    const mark = document.createElement('div');
+    mark.className = 'rwy-mark exit';
+    mark.style.top = fromTop + '%';
+    mark.innerHTML = `<div class="tick"></div><label>EXIT · ${Math.round(exitM)} m</label>`;
+    diagram.appendChild(mark);
+
+    // Which brakes make the exit (stop distance <= exit)
+    const makers = order.filter(bk => selectedDists[bk] != null && selectedDists[bk] <= exitM)
+      .map(bk => BRAKE_SHORT[BRAKE_KEYS.indexOf(bk)]);
+    if (makers.length) {
+      exitStatus.className = 'exit-status ok';
+      exitStatus.textContent = 'Makes exit: ' + makers.join(', ');
+    } else {
+      exitStatus.className = 'exit-status no';
+      exitStatus.textContent = 'No setting stops before this exit';
+    }
+  } else {
+    exitStatus.className = 'exit-status';
+    exitStatus.textContent = '';
+  }
+
   // Meta
-  const a = findAirport(document.getElementById('ld-airport').value);
   let rwyId = document.getElementById('ld-rwy').selectedOptions[0]
     ? document.getElementById('ld-rwy').selectedOptions[0].text.split(' ')[0]
     : (rwyHdg || '—');
@@ -852,8 +907,7 @@ function calcLanding() {
     <strong>${rwyId}</strong><br>
     HDG ${rwyHdg || '—'}°M<br>
     AD ELEV ${alt} ft<br>
-    SLOPE ${slope}%<br>
-    ${hwStr}
+    SLOPE ${slope}% · ${hwStr}
   `;
 
   // Breakdown for selected
@@ -868,8 +922,9 @@ function calcLanding() {
   }
 
   document.getElementById('ld-notes').innerHTML = `
-    Green = within LDA · Red = exceeds LDA. Runway diagram shows stop points for selected condition.<br>
-    QRH B737-300 tables (already +15%). Unfactored ≈ ÷1.15. Advisory data only.
+    Green cells = within LDA. Diagram: labelled stop points for selected condition.<br>
+    Enter exit distance from threshold to see which autobrake makes that intersection.<br>
+    QRH B737-300 (+15%). Unfactored ≈ ÷1.15. Advisory data only.
   `;
 }
 
@@ -1043,15 +1098,15 @@ function adjustEnergy(refE, event, brakeCfg, useRev) {
 }
 
 function coolingStatus(adjE) {
-  if (adjE <= 8) return {level:'ok', text:'No special procedure required', ground:0, inflight:0};
-  if (adjE <= 10) return {level:'ok', text:'Cooling time: Ground 19 min / Inflight gear down 2 min', ground:19, inflight:2};
-  if (adjE <= 12) return {level:'ok', text:'Cooling time: Ground 32 min / Inflight 3 min', ground:32, inflight:3};
-  if (adjE <= 14) return {level:'ok', text:'Cooling time: Ground 43 min / Inflight 4 min', ground:43, inflight:4};
-  if (adjE <= 16) return {level:'ok', text:'Cooling time: Ground 53 min / Inflight 5 min', ground:53, inflight:5};
-  if (adjE <= 18) return {level:'ok', text:'Cooling time: Ground 61 min / Inflight 6 min', ground:61, inflight:6};
-  if (adjE < 18.5) return {level:'ok', text:'Approaching caution zone', ground:61, inflight:6};
-  if (adjE <= 23.7) return {level:'warn', text:'CAUTION ZONE – Wheel fuse plugs may melt. Delay takeoff & inspect after 1 hour. If overheat after takeoff, extend gear ≥ 7 min.', ground:null, inflight:null};
-  return {level:'danger', text:'FUSE PLUG MELT ZONE – Clear runway immediately. Do not set parking brake. Do not approach gear or taxi for 1 hour. Tire/wheel/brake replacement may be required. If overheat after takeoff extend gear ≥ 12 min.', ground:null, inflight:null};
+  if (adjE <= 8) return {level:'ok', ground:0, inflight:0, text:'No special cooling required'};
+  if (adjE <= 10) return {level:'ok', ground:19, inflight:2, text:'Normal cooling schedule'};
+  if (adjE <= 12) return {level:'ok', ground:32, inflight:3, text:'Normal cooling schedule'};
+  if (adjE <= 14) return {level:'ok', ground:43, inflight:4, text:'Normal cooling schedule'};
+  if (adjE <= 16) return {level:'ok', ground:53, inflight:5, text:'Normal cooling schedule'};
+  if (adjE <= 18) return {level:'ok', ground:61, inflight:6, text:'Normal cooling schedule'};
+  if (adjE < 18.5) return {level:'ok', ground:61, inflight:6, text:'Approaching caution zone'};
+  if (adjE <= 23.7) return {level:'warn', ground:null, inflight:7, text:'CAUTION ZONE – Fuse plugs may melt. Delay takeoff & inspect after 1 hour. If overheat after takeoff, extend gear ≥ 7 min.'};
+  return {level:'danger', ground:null, inflight:12, text:'FUSE PLUG MELT ZONE – Clear runway immediately. Do not set parking brake. Do not approach gear for 1 hour. Tire/wheel/brake replacement may be required. If overheat after takeoff extend gear ≥ 12 min.'};
 }
 
 function calcCooling() {
@@ -1068,24 +1123,38 @@ function calcCooling() {
   let adjE = adjustEnergy(refE, event, brakeCfg, useRev);
   adjE += taxi * 1.0;  // +1.0 M ft-lb per taxi mile
 
-  document.getElementById('bc-energy').innerHTML = adjE.toFixed(1) + ' <span>M ft-lb</span>';
+  const st = coolingStatus(adjE);
+
+  // Primary display: minutes
+  if (st.ground === 0) {
+    document.getElementById('bc-time').innerHTML = '0 <span>min</span>';
+    document.getElementById('bc-time-detail').textContent = 'No cooling required';
+  } else if (st.ground != null) {
+    document.getElementById('bc-time').innerHTML = st.ground + ' <span>min ground</span>';
+    document.getElementById('bc-time-detail').textContent =
+      'Inflight gear down: ' + st.inflight + ' min';
+  } else {
+    // Caution / melt zone – no normal ground cooling time
+    document.getElementById('bc-time').innerHTML = (st.level === 'danger' ? '≥ 60' : '≥ 60') + ' <span>min</span>';
+    document.getElementById('bc-time-detail').textContent =
+      'Inflight gear extend ≥ ' + st.inflight + ' min · see caution below';
+  }
 
   document.getElementById('bc-break').innerHTML = `
-    <div><span>Reference energy (from table)</span><span class="val">${refE.toFixed(1)}</span></div>
-    <div><span>Adjusted for ${event === 'rto' ? 'RTO Max Man' : brakeCfg}${useRev ? ' + 2 eng reverse' : ' + No reverse'}</span><span class="val">${(adjE - taxi).toFixed(1)}</span></div>
-    ${taxi > 0 ? `<div><span>Taxi (+1.0 per mile)</span><span class="val">+${taxi.toFixed(1)}</span></div>` : ''}
+    <div><span>Ground cooling</span><span class="val">${st.ground != null ? st.ground + ' min' : '1 hour inspect'}</span></div>
+    <div><span>Inflight (gear down)</span><span class="val">${st.inflight != null ? '≥ ' + st.inflight + ' min' : '—'}</span></div>
+    <div><span>Brake energy (ref → adj)</span><span class="val">${refE.toFixed(1)} → ${adjE.toFixed(1)} M ft-lb</span></div>
+    <div><span>${event === 'rto' ? 'RTO Max Man' : brakeCfg}${useRev ? ' · 2 eng rev' : ' · no rev'}${taxi > 0 ? ' · taxi +' + taxi.toFixed(1) : ''}</span></div>
   `;
 
-  const st = coolingStatus(adjE);
   const statusEl = document.getElementById('bc-status');
   statusEl.style.display = 'block';
   statusEl.className = st.level === 'ok' ? 'ok' : (st.level === 'warn' ? 'warn' : 'warn danger');
   statusEl.textContent = st.text;
 
   document.getElementById('bc-notes').innerHTML = `
-    Table shows energy per brake for a single stop with all brakes operating.<br>
-    Energy assumed equally distributed. Add residual energy if present.<br>
-    Category A brakes. Observe maximum quick turnaround limit.
+    Cooling times from QRH Recommended Brake Cooling Schedule (Category A brakes).<br>
+    Single stop, all brakes operating. Add residual energy if present. Observe max quick turnaround limit.
   `;
 }
 
